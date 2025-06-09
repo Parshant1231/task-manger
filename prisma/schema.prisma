@@ -1,0 +1,65 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  profileImageUrl String?   
+  role          Role      @default(member)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignedTasks Task[]    @relation("AssignedTasks")
+  createdTasks  Task[]    @relation("CreatedTasks")
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  priority      Priority  @default(Medium)
+  status        Status    @default(Pending)
+  dueDate       DateTime
+  assignedTo    User[]    @relation("AssignedTasks")
+  createdBy     User      @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdById   String
+  attachments   String[]
+  todoChecklist Json[]
+  progress      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Todo {
+  id        Int     @id @default(autoincrement())
+  text      String
+  completed Boolean @default(false)
+}
+
+enum Role {
+  admin
+  member
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+}
+
+enum Status {
+  Pending
+  InProgress
+  Completed
+}
