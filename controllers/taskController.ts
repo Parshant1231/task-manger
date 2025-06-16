@@ -1,44 +1,102 @@
 import { prisma } from "@/lib/prisma";
+import { Status } from "@prisma/client";
 import { NextRequest, NextResponse as res } from "next/server";
 
 // Get all tasks
 export const getTasks = async (req: NextRequest, user: any) => {
   try {
     // Add logic to fetch tasks from DB
-    const { status } = await req.json();
-    
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status") as Status | null;
+
     const where: any = {};
 
     if (status) {
-      where.status = status;
+      where.status = status as Status;
     }
 
-    if (user.role !== "admin") {
-      where.assignedTo = {
-        some: {
-          id: user.id,
-        },
-      };
-    }
-
-    const tasks = await prisma.task.findMany({
-      where,
-      include: {
-        assignedTo: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profileImageUrl: true,
+    let tasks;
+    if (user.role === "admin") {
+      tasks = await prisma.task.findMany({
+        where: where,
+        include: {
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profileImageUrl: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
+      });
+    } else {
+      tasks = await prisma.task.findMany({
+        where: {
+          ...where,
+          assignedToId: user.id,
+        },
+        include: {
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profileImageUrl: true,
+            },
+          },
+        },
+      });
+    }
+
+    tasks = tasks.map((task) => {
+      const todoChecklist = task.todoChecklist as { completed: boolean }[];
+      const completedCount = todoChecklist.filter((item) => item.completed).length;
+
+      return {
+        ...task,
+        completedTodoCount: completedCount,
+      };
+    });
+
+    const allTasks = await prisma.task.count({
+      where: user.role === "admin" ? {} : {assignedTo: user.id},
+    })
+
+    const pendingTasks = await prisma.task.count({
+      where: {
+        ...where,
+        status: Status.Pending,
+        ...(user.role !== "admin" && { assignedTo: user.id }),
       },
     });
 
-    return res.json(tasks, { status: 200 });
+    const inProgressTasks = await prisma.task.count({
+      where: {
+        ...where,
+        status: Status.InProgress,
+        ...(user.role !== "admin" && {assignedTo: user.id})
+      }
+    });
+
+    const completedTasks = await prisma.task.count({
+      where: {
+        ...where,
+        status: Status.Completed,
+        ...(user.role !== "admin" && {assignedTo: user.id}),
+      }
+    })
+
+    return res.json({
+      tasks,
+      statusSummary: {
+        all: allTasks,
+        pending: pendingTasks,
+        inProgress: inProgressTasks,
+        completed: completedTasks,
+      }
+    },{ status: 200 });
+
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return res.json({ message: "Internal server error" }, { status: 500 });
@@ -105,10 +163,30 @@ export const createTask = async (req: NextRequest, user: any) => {
           completed: item.completed,
         })),
       },
+      include: {
+        assignedTo: {
+          select: { id: true },
+        }, // 👈 include the assignedTo relation
+      },
     });
 
+    const formattedTask = {
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      createdBy: user.id,
+      assignedTo: task.assignedTo.map((user) => user.id),
+      attachments: attachments ?? [],
+      todoChecklist: task.todoChecklist.map((item: any) => ({
+        text: item.text,
+        completed: item.completed,
+      })),
+      progress: task.progress,
+    };
+
     return res.json(
-      { message: "Task created successfully", task },
+      { message: "Task created successfully", formattedTask },
       { status: 201 }
     );
   } catch (error) {
