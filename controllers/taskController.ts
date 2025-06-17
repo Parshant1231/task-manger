@@ -34,7 +34,11 @@ export const getTasks = async (req: NextRequest, user: any) => {
       tasks = await prisma.task.findMany({
         where: {
           ...where,
-          assignedToId: user.id,
+          assignedTo: {
+            some: {
+              id : user.id,
+            }
+          },
         },
         include: {
           assignedTo: {
@@ -60,14 +64,18 @@ export const getTasks = async (req: NextRequest, user: any) => {
     });
 
     const allTasks = await prisma.task.count({
-      where: user.role === "admin" ? {} : {assignedTo: user.id},
+      where: user.role === "admin" ? {} : {assignedTo: {
+        some: { id: user.id}
+      }},
     })
 
     const pendingTasks = await prisma.task.count({
       where: {
         ...where,
         status: Status.Pending,
-        ...(user.role !== "admin" && { assignedTo: user.id }),
+        ...(user.role !== "admin" && { assignedTo: {
+          some : { id: user.id}
+        } }),
       },
     });
 
@@ -75,7 +83,9 @@ export const getTasks = async (req: NextRequest, user: any) => {
       where: {
         ...where,
         status: Status.InProgress,
-        ...(user.role !== "admin" && {assignedTo: user.id})
+        ...(user.role !== "admin" && {assignedTo: {
+          some: { id: user.id }
+        }})
       }
     });
 
@@ -83,7 +93,9 @@ export const getTasks = async (req: NextRequest, user: any) => {
       where: {
         ...where,
         status: Status.Completed,
-        ...(user.role !== "admin" && {assignedTo: user.id}),
+        ...(user.role !== "admin" && {assignedTo: {
+          some: { id: user.id }
+        }}),
       }
     })
 
