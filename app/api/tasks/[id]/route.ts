@@ -6,7 +6,7 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
   const auth = await protect(req);
   if (auth instanceof NextResponse) return auth;
 
-  return getTaskById(req, context);
+  return getTaskById(context);
 }
 
 export async function PUT(req: NextRequest, context: { params: { id: string } }) {

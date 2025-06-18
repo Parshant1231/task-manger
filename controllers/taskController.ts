@@ -36,8 +36,8 @@ export const getTasks = async (req: NextRequest, user: any) => {
           ...where,
           assignedTo: {
             some: {
-              id : user.id,
-            }
+              id: user.id,
+            },
           },
         },
         include: {
@@ -55,7 +55,9 @@ export const getTasks = async (req: NextRequest, user: any) => {
 
     tasks = tasks.map((task) => {
       const todoChecklist = task.todoChecklist as { completed: boolean }[];
-      const completedCount = todoChecklist.filter((item) => item.completed).length;
+      const completedCount = todoChecklist.filter(
+        (item) => item.completed
+      ).length;
 
       return {
         ...task,
@@ -64,18 +66,25 @@ export const getTasks = async (req: NextRequest, user: any) => {
     });
 
     const allTasks = await prisma.task.count({
-      where: user.role === "admin" ? {} : {assignedTo: {
-        some: { id: user.id}
-      }},
-    })
+      where:
+        user.role === "admin"
+          ? {}
+          : {
+              assignedTo: {
+                some: { id: user.id },
+              },
+            },
+    });
 
     const pendingTasks = await prisma.task.count({
       where: {
         ...where,
         status: Status.Pending,
-        ...(user.role !== "admin" && { assignedTo: {
-          some : { id: user.id}
-        } }),
+        ...(user.role !== "admin" && {
+          assignedTo: {
+            some: { id: user.id },
+          },
+        }),
       },
     });
 
@@ -83,32 +92,38 @@ export const getTasks = async (req: NextRequest, user: any) => {
       where: {
         ...where,
         status: Status.InProgress,
-        ...(user.role !== "admin" && {assignedTo: {
-          some: { id: user.id }
-        }})
-      }
+        ...(user.role !== "admin" && {
+          assignedTo: {
+            some: { id: user.id },
+          },
+        }),
+      },
     });
 
     const completedTasks = await prisma.task.count({
       where: {
         ...where,
         status: Status.Completed,
-        ...(user.role !== "admin" && {assignedTo: {
-          some: { id: user.id }
-        }}),
-      }
-    })
+        ...(user.role !== "admin" && {
+          assignedTo: {
+            some: { id: user.id },
+          },
+        }),
+      },
+    });
 
-    return res.json({
-      tasks,
-      statusSummary: {
-        all: allTasks,
-        pending: pendingTasks,
-        inProgress: inProgressTasks,
-        completed: completedTasks,
-      }
-    },{ status: 200 });
-
+    return res.json(
+      {
+        tasks,
+        statusSummary: {
+          all: allTasks,
+          pending: pendingTasks,
+          inProgress: inProgressTasks,
+          completed: completedTasks,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return res.json({ message: "Internal server error" }, { status: 500 });
@@ -117,13 +132,34 @@ export const getTasks = async (req: NextRequest, user: any) => {
 
 // Get a single task by ID
 export const getTaskById = async (
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) => {
   try {
     // Fetch task by ID from DB
-    return res.json(
-      { message: `Task ${params.id} fetched successfully` },
+    const id = context.params.id;
+    const task = await prisma.task.findUnique({
+      where: { id},
+      include: {
+        assignedTo: {
+          select: {
+            name: true,
+            email: true,
+            profileImageUrl: true,
+          }
+        }
+      }
+    });
+
+    if(!task) {
+      return res.json(
+        { message: `Task ${id} not found` },
+        {status: 404}
+      )
+    }
+    return res.json({
+      task,
+      message: `Task ${id} fetched successfully`,
+      },
       { status: 200 }
     );
   } catch (error) {
