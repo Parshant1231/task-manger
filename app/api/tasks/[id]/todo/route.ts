@@ -6,5 +6,5 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   const auth = await protect(req);
   if (auth instanceof NextResponse) return auth;
 
-  return updateTaskChecklist(req, context);
+  return updateTaskChecklist(req, {id: context.params.id, user: auth });
 }
