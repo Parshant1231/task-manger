@@ -6,5 +6,5 @@ export async function GET(req: NextRequest) {
   const auth = await protect(req);
   if (auth instanceof NextResponse) return auth;
 
-  return getUserDashboardData(req);
+  return getUserDashboardData(req, auth);
 }

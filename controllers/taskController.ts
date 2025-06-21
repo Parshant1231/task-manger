@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { Status } from "@prisma/client";
+import { Priority, Status } from "@prisma/client";
 import { NextRequest, NextResponse as res } from "next/server";
+import { useId } from "react";
 
 // Get all tasks
 export const getTasks = async (req: NextRequest, user: any) => {
@@ -409,7 +410,7 @@ export const updateTaskChecklist = async (
 ) => {
   try {
     const body = await req.json();
-    const todoChecklist = body.todoChecklist
+    const todoChecklist = body.todoChecklist;
     const taskId = id;
     const userId = user.id;
     const updates: any = {};
@@ -486,8 +487,76 @@ export const updateTaskChecklist = async (
 export const getDashboardData = async (req: NextRequest) => {
   try {
     // Fetch dashboard data
+    const totalTasks = await prisma.task.count();
+    const pendingTasks = await prisma.task.count({
+      where: { status: Status.Pending },
+    });
+    const completedTasks = await prisma.task.count({
+      where: { status: Status.Completed },
+    });
+    const overdueTasks = await prisma.task.count({
+      where: {
+        status: { not: Status.Completed },
+        dueDate: { lt: new Date() },
+      },
+    });
+    const taskStatuses = [Status.Pending, Status.InProgress, Status.Completed];
+    const taskDistributionRaw = await prisma.task.groupBy({
+      by: ["status"],
+      _count: { status: true },
+    });
+
+    const taskDistribution: Record<string, number> = {};
+    taskStatuses.forEach((status) => {
+      const match = taskDistributionRaw.find((item) => item.status === status);
+      taskDistribution[status] = match ? match._count.status : 0;
+    });
+
+    taskDistribution["All"] = totalTasks;
+
+    const taskPriorities = [Priority.Low, Priority.Medium, Priority.High];
+    const taskPriorityLevelsRaw = await prisma.task.groupBy({
+      by: ["priority"],
+      _count: { priority: true },
+    });
+
+    const taskPriorityLevels: Record<string, number> = {};
+    taskPriorities.forEach((priority) => {
+      const map = taskPriorityLevelsRaw.find(
+        (item) => item.priority === priority
+      );
+      taskPriorityLevels[priority] = map ? map._count.priority : 0;
+    });
+
+    const recentTasks = await prisma.task.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
+      select: {
+        title: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+        createdAt: true,
+      },
+    });
+
     return res.json(
-      { message: "Dashboard data fetched successfully" },
+      {
+        message: "Dashboard data fetched successfully",
+        statistics: {
+          totalTasks,
+          pendingTasks,
+          completedTasks,
+          overdueTasks,
+        },
+        charts: {
+          taskDistribution,
+          taskPriorityLevels,
+        },
+        recentTasks,
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -497,11 +566,113 @@ export const getDashboardData = async (req: NextRequest) => {
 };
 
 // Get user-specific dashboard data
-export const getUserDashboardData = async (req: NextRequest) => {
+export const getUserDashboardData = async (req: NextRequest, user: any) => {
   try {
     // Fetch user dashboard data
+    const userId = user.id;
+    const totalTasks = await prisma.task.count({
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+      },
+    });
+    const pendingTasks = await prisma.task.count({
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+        status: Status.Pending,
+      },
+    });
+    const completedTasks = await prisma.task.count({
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+        status: Status.Completed,
+      },
+    });
+    const overdueTasks = await prisma.task.count({
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+        status: { not: Status.Completed },
+        dueDate: { lt: new Date() },
+      },
+    });
+
+    const taskStatuses = [Status.Pending, Status.InProgress, Status.Completed];
+    const taskDistributionRaw = await prisma.task.groupBy({
+      by: ["status"],
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+      },
+      _count: { status: true },
+    });
+
+    const taskDistribution: Record<string, number> = {};
+    taskStatuses.forEach((status) => {
+      const match = taskDistributionRaw.find((item) => item.status === status);
+      taskDistribution[status] = match ? match._count.status : 0;
+    });
+    taskDistribution["All"] = totalTasks;
+
+    // Task Distribution by priority
+    const taskPriorities = [Priority.Low, Priority.Medium, Priority.High];
+    const taskPriorityLevelsRaw = await prisma.task.groupBy({
+      by: ["priority"],
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+      },
+      _count: { priority: true },
+    });
+
+    const taskPriorityLevels: Record<string, number> = {};
+    taskPriorities.forEach((priority) => {
+      const match = taskPriorityLevelsRaw.find(
+        (item) => item.priority === priority
+      );
+      taskPriorityLevels[priority] = match ? match._count.priority : 0;
+    });
+
+    const recentTasks = await prisma.task.findMany({
+      where: {
+        assignedTo: {
+          some: { id: userId },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        title: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+        createdAt: true,
+      },
+    });
+
     return res.json(
-      { message: "User dashboard data fetched successfully" },
+      {
+        message: "User dashboard data fetched successfully",
+        statistics: {
+          totalTasks,
+          pendingTasks,
+          completedTasks,
+          overdueTasks,
+        },
+        charts: {
+          taskDistribution,
+          taskPriorityLevels,
+        },
+        recentTasks,
+      },
       { status: 200 }
     );
   } catch (error) {
