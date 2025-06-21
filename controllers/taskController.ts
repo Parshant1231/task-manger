@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Priority, Status } from "@prisma/client";
 import { NextRequest, NextResponse as res } from "next/server";
-import { useId } from "react";
 
 // Get all tasks
 export const getTasks = async (req: NextRequest, user: any) => {
