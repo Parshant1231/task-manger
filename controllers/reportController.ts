@@ -16,9 +16,11 @@ export const exportTaskReport = async (req: NextRequest) => {
       },
     });
 
+    // Initalize the workbook & worksheet
     const workbook = new excelJS.Workbook();
     const worksheet = workbook.addWorksheet("Tasks Report");
 
+    // Add the columns in worksheet
     worksheet.columns = [
       { header: "Task ID", key: "id", width: 25 },
       { header: "Title", key: "title", width: 30 },
@@ -34,6 +36,7 @@ export const exportTaskReport = async (req: NextRequest) => {
       { header: "Assigned To", key: "assignedTo", width: 30 },
     ];
 
+    // Adds the rows in the worksheet
     tasks.forEach((task) => {
       const assignedTo =
         task.assignedTo
