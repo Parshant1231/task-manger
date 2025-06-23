@@ -131,7 +131,7 @@ export const getTasks = async (req: NextRequest, user: any) => {
 };
 
 // Get a single task by ID
-export const getTaskById = async (id: string): Promise<NextResponse> => {
+export const getTaskById = async (id: string)=> {
   try {
     const task = await prisma.task.findUnique({
       where: { id },
@@ -236,15 +236,13 @@ export const createTask = async (req: NextRequest, user: any) => {
 // Update an existing task
 export const updateTask = async (
   req: NextRequest,
-  context: { params: { id: string } }
+   id: string 
 ) => {
   try {
-    const { params } = context;
-    const taskId = params.id;
     const body = await req.json();
 
     const existingTask = await prisma.task.findUnique({
-      where: { id: taskId },
+      where: { id },
       include: { assignedTo: true },
     });
 
@@ -279,7 +277,7 @@ export const updateTask = async (
       attachments: body.attachments || undefined,
     };
     const updateTaskData = await prisma.task.update({
-      where: { id: taskId },
+      where: { id },
       data: updatedData,
     });
     // Update task in DB
@@ -296,20 +294,19 @@ export const updateTask = async (
 // Delete a task
 export const deleteTask = async (
   req: NextRequest,
-  { params }: { params: { id: string } }
+   id: string 
 ) => {
   try {
     // Delete task from DB
-    const taskId = params.id;
     const existingTask = await prisma.task.findUnique({
-      where: { id: taskId },
+      where: { id },
     });
 
     if (!existingTask) {
       return res.json({ message: "Task not found" }, { status: 404 });
     }
     await prisma.task.delete({
-      where: { id: taskId },
+      where: { id },
     });
 
     return res.json({ message: "Task deleted successfully" }, { status: 200 });
@@ -322,15 +319,14 @@ export const deleteTask = async (
 // Update task status
 export const updateTaskStatus = async (
   req: NextRequest,
-  context: { params: { id: string }; user: any }
+   id: string , 
+   user: any 
 ) => {
   try {
     const body = await req.json();
-    const taskId = context.params.id;
-    const user = context.user;
 
     const task = await prisma.task.findUnique({
-      where: { id: taskId },
+      where: { id },
       include: { assignedTo: true },
     });
     if (!task) {
@@ -376,7 +372,7 @@ export const updateTaskStatus = async (
     }
 
     const updateTask = await prisma.task.update({
-      where: { id: taskId },
+      where: { id },
       data: updates,
       include: { assignedTo: true },
     });
@@ -399,7 +395,8 @@ export const updateTaskStatus = async (
 // Update task checklist
 export const updateTaskChecklist = async (
   req: NextRequest,
-  { id, user }: { id: string; user: any }
+  id: string,
+  user:any 
 ) => {
   try {
     const body = await req.json();
