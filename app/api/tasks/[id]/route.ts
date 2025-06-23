@@ -2,11 +2,15 @@ import { deleteTask, getTaskById, updateTask } from "@/controllers/taskControlle
 import { adminOnly, protect } from "@/middleware/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
-  const auth = await protect(req);
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } } // ✅ DO NOT destructure this
+): Promise<NextResponse> {
+  const auth = await protect(request);
   if (auth instanceof NextResponse) return auth;
 
-  return getTaskById(context);
+  const taskId = context.params.id;
+  return getTaskById(taskId); // ✅ should return NextResponse
 }
 
 export async function PUT(req: NextRequest, context: { params: { id: string } }) {

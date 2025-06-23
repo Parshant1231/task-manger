@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Priority, Status } from "@prisma/client";
-import { NextRequest, NextResponse as res } from "next/server";
+import { NextRequest, NextResponse, NextResponse as res } from "next/server";
 
 // Get all tasks
 export const getTasks = async (req: NextRequest, user: any) => {
@@ -131,10 +131,8 @@ export const getTasks = async (req: NextRequest, user: any) => {
 };
 
 // Get a single task by ID
-export const getTaskById = async (context: { params: { id: string } }) => {
+export const getTaskById = async (id: string): Promise<NextResponse> => {
   try {
-    // Fetch task by ID from DB
-    const id = context.params.id;
     const task = await prisma.task.findUnique({
       where: { id },
       include: {
@@ -149,20 +147,16 @@ export const getTaskById = async (context: { params: { id: string } }) => {
     });
 
     if (!task) {
-      return res.json({ message: `Task not found` }, { status: 404 });
+      return NextResponse.json({ message: "Task not found" }, { status: 404 });
     }
-    return res.json(
-      {
-        task,
-        message: `Task fetched successfully`,
-      },
-      { status: 200 }
-    );
+
+    return NextResponse.json({ task, message: "Task fetched successfully" });
   } catch (error) {
     console.error("Error fetching task by ID:", error);
-    return res.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 };
+
 
 // Create a new task
 export const createTask = async (req: NextRequest, user: any) => {

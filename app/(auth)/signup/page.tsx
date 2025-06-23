@@ -1,78 +1,87 @@
-import Card from "@/Components/ui/Card";
+"use client";
+import { Input } from "@/Components/Inputs/Input";
+import { validateEmail } from "@/utils/helper";
+import Link from "next/link";
+import React, { useState } from "react";
 
-export default function (){
-    return  <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
-    <div className="bg-white h-screen w-screen rounded shadow-md py-10 px-14 ">
-      <h2 className="text-2xl font-bold mb-40">Task Manager</h2>
-      <div className="flex-1">
-          <div>
-              <h1 className="text-2xl font-bold">Welcome Back</h1>
-              <p className="text-gray-600">Please enter your details to log in</p>
-          </div>
-        <form className="mt-6 grid md:grid-cols-12 gap-4">
-          <div className="mb-6 md:col-span-6">
-            <label className="block text-sm  font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              className="mt-1 block w-lg px-3 py-2  mt-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              required
-              placeholder="John"
-            />
-          </div>
-          <div className="mb-6 md:col-span-6">
-            <label className="block text-sm  font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              className="mt-1 block w-lg px-3 py-2 mt-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              required
-              placeholder="john@gmail.com"
-            />
-          </div>
-          <div className="mb-6 md:col-span-6">
-            <label className="block text-sm  font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="email"
-              className="mt-1 block w-lg px-3 py-2 mt-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              required
-              placeholder="Min 8 Characters"
-            />
-          </div>
-          <div className="mb-6 md:col-span-6">
-            <label className="block text-sm  font-medium text-gray-700">
-              Admin Invite Token
-            </label>
-            <input
-              type="email"
-              className="mt-1 block w-lg px-3 py-2 mt-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              required
-              placeholder="6 Digit Code"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-xl bg-blue-600 font-bold text-white py-2 rounded-md hover:bg-blue-700 transition duration-200"
-          >
-            SIGN UP
-          </button>
-        </form>
-      </div>
-      <div>
-          <p className="mt-4 text-sm text-gray-600">
-              Already have an account?{' '}
-              <a href="/auth/login" className="text-blue-600 font-medium underline">
-              Login
-              </a>
-          </p>
-      </div>
+export default function SignupPage() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter the password.");
+      return;
+    }
+
+    // setError(null);
+  };
+  return (
+    <div className="lg:w-[70%] h-3/4 md:h-full flex flex-col justify-center">
+      <h1 className="text-2xl font-semibold text-black">Welcome Back</h1>
+      <p className="text-md text-slate-700 mt-[px] mb-6">
+        Please enter your details to Sign Up
+      </p>
+
+      <form onSubmit={handleSignup}>
+        <Input
+          value={firstName}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setFirstName(e.target.value)
+          }
+          label="First Name"
+          placeholder="John"
+          type="text"
+        />
+        <Input
+          value={lastName}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setLastName(e.target.value)
+          }
+          label="Last Name"
+          placeholder="Kay"
+          type="text"
+        />
+        <Input
+          value={email}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
+          label="Email Address"
+          placeholder="john13@gmail.com"
+          type="email"
+        />
+        <Input
+          value={password}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPassword(e.target.value)
+          }
+          label="Password"
+          placeholder="Min 8 Chararacters"
+          type="password"
+        />
+
+        {error && <p className="text-red-500 text-xs pb-2.5">{error}</p>}
+
+        <button type="submit" className="btn-primary">
+          SIGNUP
+        </button>
+
+        <p>
+          Have an account?{" "}
+          <Link href="./login" className="font-medium text-primary underline">
+            Log in
+          </Link>
+        </p>
+      </form>
     </div>
-    <div className="bg-blue-600 h-screen w-330 rounded shadow-md ">
-        <Card />
-    </div>
-  </div>
+  );
 }
