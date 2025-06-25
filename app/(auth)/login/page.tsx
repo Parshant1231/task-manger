@@ -23,12 +23,20 @@ export default function LoginPage() {
     }
 
     setError(null);
+
+    // Sign in API call
+    try{
+
+    } catch(e){
+      
+    }
+
   };
 
   return (
     <div className="lg:w-[70%] h-3/4 md:h-full flex flex-col justify-center">
       <h1 className="text-2xl font-semibold text-black">Welcome Back</h1>
-      <p className="text-md text-slate-700 mt-[px] mb-6">
+      <p className="text-md text-slate-700 mt-[5px] mb-6">
         Please enter your details to log in
       </p>
 
@@ -51,7 +59,7 @@ export default function LoginPage() {
           placeholder="Min 8 Charaters"
           type="password"
         />
-        {error && <p className="text-red-500 text-xs pb-2.5">{error}</p>}
+        {error && <p className="text-red-500 text-sm font-medium pb-2.5">{error}</p>}
 
         <button type="submit" className="btn-primary">
           LOGIN
@@ -60,7 +68,7 @@ export default function LoginPage() {
         <p>
           Don &#39;t have an account?{" "}
           <Link href="./signup" className="font-medium text-primary underline">
-            Sign Up
+            SignUp
           </Link>
         </p>
       </form>

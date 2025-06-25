@@ -21,7 +21,6 @@ export const Input = ({ value, onChange, label, placeholder, type }: any) => {
           }
           value={value}
           className="w-full bg-transparent outline-none"
-          required
           placeholder={placeholder}
           onChange={(e) => onChange(e)}
         />
