@@ -1,9 +1,13 @@
 "use client";
 import { Input } from "@/Components/Inputs/Input";
 import { ProfilePhotoSelector } from "@/Components/Inputs/ProfilePhotoSelector";
+import { userContext } from "@/context/userContext";
+import { API_PATHS } from "@/utils/apiPaths";
+import axiosInstance from "@/utils/axiosInstance";
 import { validateEmail } from "@/utils/helper";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useContext, useState } from "react";
 
 
 export default function SignupPage() {
@@ -13,9 +17,13 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { updateUser } = useContext(userContext);
+  const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let profileImageUrl = ' '
 
     if (!fullName) {
       setError("Please enter full name.");
@@ -33,6 +41,29 @@ export default function SignupPage() {
     setError(null);
 
     // Sign up API call
+    try {
+     const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
+      email,
+      password,
+      adminInviteToken
+     });
+
+     const { token, role} = response.data;
+
+     if(token){
+      localStorage.setItem("token", token);
+      updateUser(response.data);
+
+      // Redirect base on role
+      if(role === "admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/dashboard")
+      }
+     }
+    } catch (e) {
+      console.error("Login failed", e);
+    }
   };
   return (
     <div className="lg:w-[70%] h-3/4 md:h-full flex flex-col justify-center mt-30 md:mt-0">

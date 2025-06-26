@@ -1,17 +1,26 @@
 "use client";
 import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
+import { Role } from "@prisma/client";
 import React, { ReactNode, useEffect, useState } from "react";
 import { createContext } from "react";
 
-interface UserCOntextType {
-    user: string | null;
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: Role;
+  profileImageUrl: string;
+  token: string;
+}
+interface UserContextType {
+    user: User | null;
     loading: boolean;
     updateUser: (userData: any) => void;
     clearUser: () => void;
 }
 
-export const userContext = createContext<UserCOntextType>({
+export const userContext = createContext<UserContextType>({
   user: null,
   loading: true,
   updateUser: () => {},
@@ -19,7 +28,7 @@ export const userContext = createContext<UserCOntextType>({
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   
