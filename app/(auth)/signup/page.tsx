@@ -23,7 +23,6 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let profileImageUrl = ' '
 
     if (!fullName) {
       setError("Please enter full name.");

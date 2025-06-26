@@ -3,8 +3,7 @@ import { ReactNode } from "react";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    
         <div className="flex">
           {/* Form container */}
           <div className="h-screen md:w-[60vw] bg-white  px-12 pt-8 pb-12 ">
@@ -18,7 +17,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="w-64 lg:w-[90%]"></div>
           </div>
         </div>
-      </body>
-    </html>
+
   );
 }
