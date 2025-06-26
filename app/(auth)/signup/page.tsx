@@ -5,6 +5,7 @@ import { validateEmail } from "@/utils/helper";
 import Link from "next/link";
 import React, { useState } from "react";
 
+
 export default function SignupPage() {
   const [profilePic, setProfilePic] = useState(null);
   const [fullName, setFullName] = useState("");

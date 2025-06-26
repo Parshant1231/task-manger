@@ -1,15 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import Link from "next/link";
 import { Input } from "@/Components/Inputs/Input";
 import { validateEmail } from "@/utils/helper";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_PATHS } from "@/utils/apiPaths";
+import { useRouter } from "next/navigation";
+import { userContext } from "@/context/userContext";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { updateUser } = useContext(userContext);
 
-  // const router = useRouter();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +31,26 @@ export default function LoginPage() {
     setError(null);
 
     // Sign in API call
-    try{
+    try {
+      const response = await axiosInstance.post(API_PATHS.AUTH.LOGIN, {
+        email,
+        password,
+      });
 
-    } catch(e){
-      
+      const { token, role } = response.data;
+      if (token) {
+        localStorage.setItem("token", token);
+        updateUser(response.data);
+        // Redirect based on role
+        if (role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    } catch (e) {
+      console.error("Login failed", e);
     }
-
   };
 
   return (
@@ -59,7 +79,9 @@ export default function LoginPage() {
           placeholder="Min 8 Charaters"
           type="password"
         />
-        {error && <p className="text-red-500 text-sm font-medium pb-2.5">{error}</p>}
+        {error && (
+          <p className="text-red-500 text-sm font-medium pb-2.5">{error}</p>
+        )}
 
         <button type="submit" className="btn-primary">
           LOGIN
