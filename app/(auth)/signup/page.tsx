@@ -1,10 +1,12 @@
 "use client";
+
 import { Input } from "@/Components/Inputs/Input";
 import { ProfilePhotoSelector } from "@/Components/Inputs/ProfilePhotoSelector";
 import { userContext } from "@/context/userContext";
 import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
 import { validateEmail } from "@/utils/helper";
+import { uploadImage } from "@/utils/uploadImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useContext, useState } from "react";
@@ -23,6 +25,7 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let profileImageUrl = '';
 
     if (!fullName) {
       setError("Please enter full name.");
@@ -41,10 +44,18 @@ export default function SignupPage() {
 
     // Sign up API call
     try {
+
+      // Upload image if present
+      if(profilePic){
+        const imgUploadRes = await uploadImage(profilePic);
+        profileImageUrl = imgUploadRes.imageUrl || "";
+      }
      const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
+      name: fullName,
       email,
       password,
-      adminInviteToken
+      profileImageUrl,
+      adminInviteToken: adminInviteToken || null,
      });
 
      const { token, role} = response.data;

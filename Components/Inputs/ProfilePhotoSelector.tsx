@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { LuTrash, LuUpload, LuUser } from "react-icons/lu";
 import Image from "next/image";
+
 export const ProfilePhotoSelector = ({ image, setImage }: any) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
