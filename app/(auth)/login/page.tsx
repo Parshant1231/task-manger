@@ -17,6 +17,7 @@ export default function LoginPage() {
 
   const router = useRouter();
 
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(email)) {
@@ -43,9 +44,9 @@ export default function LoginPage() {
         updateUser(response.data);
         // Redirect based on role
         if (role === "admin") {
-          router.push("/admin/dashboard");
+          router.replace("/admin/dashboard");
         } else {
-          router.push("/dashboard");
+          router.replace("/dashboard");
         }
       }
     } catch (e) {
@@ -54,7 +55,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="lg:w-[70%] h-3/4 md:h-full flex flex-col justify-center">
+    <div className="w-full lg:w-[65%] h-3/4 md:h-full flex flex-col justify-center mt-20 md:mt-0">
       <h1 className="text-2xl font-semibold text-black">Welcome Back</h1>
       <p className="text-md text-slate-700 mt-[5px] mb-6">
         Please enter your details to log in

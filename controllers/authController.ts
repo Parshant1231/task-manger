@@ -107,6 +107,9 @@ export const getUserProfile = async (user: any) => {
         _id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        profileImageUrl: user.profileImageUrl,
+        token: user.token
       },
       { status: 200 }
     );

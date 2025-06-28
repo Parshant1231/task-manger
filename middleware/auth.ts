@@ -21,7 +21,8 @@ export async function authenticate(req: NextRequest) {
         id: true,
         name: true,
         email: true,
-        role: true, // include role for admin check
+        role: true,
+         // include role for admin check
       },
     });
 
@@ -29,7 +30,7 @@ export async function authenticate(req: NextRequest) {
       return { error: "Not authorized, user not found", status: 401 };
     }
 
-    return { user };
+    return { user, token };
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
       return { error: "Not authorized, token expired", status: 401 };
@@ -40,12 +41,12 @@ export async function authenticate(req: NextRequest) {
 
 // Middleware-like wrapper to protect API routes
 export async function protect(req: NextRequest) {
-  const { user, error, status } = await authenticate(req);
+  const { user,token, error, status } = await authenticate(req);
   if (error) {
     return NextResponse.json({ message: error }, { status });
   }
   // Return the user object for the handler to use
-  return user!;
+  return { ...user, token };
 }
 
 // Middleware for admin-only access check
