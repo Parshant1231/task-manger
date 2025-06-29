@@ -524,6 +524,7 @@ export const getDashboardData = async (req: NextRequest) => {
       },
       take: 10,
       select: {
+        id: true,
         title: true,
         status: true,
         priority: true,

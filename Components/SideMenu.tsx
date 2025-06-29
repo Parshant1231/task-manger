@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
+import { getFirstName } from "@/utils/helper";
 export default function SideMenu({ activeMenu }: { activeMenu: string }) {
   const { user, clearUser } = useContext(userContext);
   const [sideMenuData, setSideMenuData] = useState<typeof SIDE_MENU_DATA>([]);
@@ -22,10 +23,6 @@ export default function SideMenu({ activeMenu }: { activeMenu: string }) {
     navigate.replace(route);
   };
 
-  const getFirstName = (name: string): string => {
-    const first = name.trim().split(" ")[0];
-    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-  };
 
   useEffect(() => {
     if (user) {
