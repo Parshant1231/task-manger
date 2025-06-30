@@ -2,27 +2,28 @@
 
 import { userContext } from "@/context/userContext";
 import { SIDE_MENU_DATA, SIDE_MENU_USER_DATA } from "@/utils/data";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { getFirstName } from "@/utils/helper";
-export default function SideMenu({ activeMenu }: { activeMenu: string }) {
+
+export default function SideMenu() {
   const { user, clearUser } = useContext(userContext);
   const [sideMenuData, setSideMenuData] = useState<typeof SIDE_MENU_DATA>([]);
 
+  const pathname = usePathname();
   const navigate = useRouter();
 
   const handleClick = (route: any) => {
     if (route === "logout") {
       localStorage.clear();
       clearUser();
-      navigate.replace("/login");
+      navigate.push("/login");
     }
 
-    navigate.replace(route);
+    navigate.push(route);
   };
-
 
   useEffect(() => {
     if (user) {
@@ -33,11 +34,11 @@ export default function SideMenu({ activeMenu }: { activeMenu: string }) {
     return () => {};
   }, [user]);
   return (
-    <div className="w-64 h-[calc(100vh-61px)] bg-white order-r border-gray-200/50 sticky top-[61px] z-20">
+    <div className="w-64 h-[calc(100vh-61px)] bg-white order-r border-gray-200/50 sticky top-[61px] z-20 ">
       <div className="flex flex-col items-center justify-center mb-7 pt-5">
         <div className="relative w-20 h-20 rounded-full overflow-hidden shadow-md ring-2 ring-primary">
           <img
-            src={user?.profileImageUrl || ""}
+            src={user?.profileImageUrl || "/default.png"}
             alt="Profile"
             className="object-cover w-full h-full"
           />
@@ -56,10 +57,9 @@ export default function SideMenu({ activeMenu }: { activeMenu: string }) {
         <p className="text-[12px] text-gray-500 ">{user?.email || ""}</p>
       </div>
       <div>
-        {SIDE_MENU_DATA.map((item, index) => {
+        {sideMenuData.map((item, index) => {
           const Icon = item.icon;
-          const isActive = activeMenu.toLowerCase() === item.label.toLowerCase();
-
+          const isActive = pathname.startsWith(item.path);
 
           return (
             <button

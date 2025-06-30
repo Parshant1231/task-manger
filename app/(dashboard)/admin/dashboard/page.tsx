@@ -1,11 +1,11 @@
 "use client";
 
+import Loading from "@/app/loading";
 import { InfoCard } from "@/Components/Cards/InfoCard";
 import { CustomBarChart } from "@/Components/Charts/CustomBarChart";
 import { CustomPieChart } from "@/Components/Charts/CustomPieChart";
 import { TaskListTable } from "@/Components/TaskListTable";
 import { userContext } from "@/context/userContext";
-import { useUserAuth } from "@/hooks/useUserAuth";
 import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
 import { BarChartItem, DashboardDataDT, PieChartItem } from "@/utils/dataTypes";
@@ -18,11 +18,9 @@ import { LuSquareArrowRight } from "react-icons/lu";
 const COLORS = ["#6366F1", "#10B981", "#F59E0B"];
 
 export default function Dashboard() {
-  useUserAuth();
-
   const { user, loading } = useContext(userContext);
-  const navigate = useRouter();
 
+  const navigate = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardDataDT | null>(
     null
   );
@@ -79,8 +77,10 @@ export default function Dashboard() {
     return () => {};
   }, []);
 
+
   return (
     <div className="bg-gray-50">
+      {/* User Card & Data */}
       <div className="card my-5">
         <div>
           <div className="col-span-3">
