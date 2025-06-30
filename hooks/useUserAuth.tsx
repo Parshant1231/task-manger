@@ -20,6 +20,7 @@ export const useUserAuth = () => {
 
     const isAdminRoute = pathname.startsWith("/admin/dashboard");
     const isUserRoute = pathname.startsWith("/dashboard");
+    const isAuthPage = pathname === "/login" || pathname === "/signup";
 
     if (isAdminRoute && user.role !== "admin") {
       router.push("/dashboard");
@@ -28,6 +29,16 @@ export const useUserAuth = () => {
 
     if (isUserRoute && user.role !== "member") {
       router.push("/admin/dashboard");
+      return;
+    }
+
+    // If user is logged in and visits login/signup, redirect them to their correct dashboard
+    if (isAuthPage) {
+      if (user.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
       return;
     }
 

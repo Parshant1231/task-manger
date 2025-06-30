@@ -8,11 +8,14 @@ import React, { ReactNode, useContext } from "react";
 import Loading from "../loading";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useContext(userContext);
+
   const { authReady } = useUserAuth(); // ✅ Important: add this line
+  const { user, loading } = useContext(userContext);
 
   // ✅ Wait until user + role check is complete
   if (loading || !user || !authReady) return <Loading />;
+
+  
 
   return (
     <div key={user?.role}>

@@ -1,7 +1,14 @@
-
+"use client";
+import { useUserAuth } from "@/hooks/useUserAuth";
 import { ReactNode } from "react";
+import Loading from "../loading";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+    const { authReady } = useUserAuth(); // ✅ hook runs globally
+
+  if (!authReady) return <Loading />;
+
+
   return (
     
         <div className="flex">
