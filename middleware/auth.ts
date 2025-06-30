@@ -22,6 +22,7 @@ export async function authenticate(req: NextRequest) {
         name: true,
         email: true,
         role: true,
+        profileImageUrl: true
          // include role for admin check
       },
     });

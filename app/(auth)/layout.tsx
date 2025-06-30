@@ -1,12 +1,13 @@
 "use client";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { ReactNode } from "react";
+import { ReactNode, useContext } from "react";
 import Loading from "../loading";
+import { userContext } from "@/context/userContext";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
-    const { authReady } = useUserAuth(); // ✅ hook runs globally
-
-  if (!authReady) return <Loading />;
+    const { authReady } = useUserAuth(); 
+    const { loading } = useContext(userContext);
+  if (loading || !authReady) return <Loading />;
 
 
   return (

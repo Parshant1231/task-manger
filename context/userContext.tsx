@@ -33,8 +33,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   
   useEffect(() => {
-    if (user) return;
-
     const accesToken = localStorage.getItem("token");
     if (!accesToken) {
       setLoading(false);

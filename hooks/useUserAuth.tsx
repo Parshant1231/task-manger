@@ -6,21 +6,29 @@ export const useUserAuth = () => {
   const { user, loading, clearUser } = useContext(userContext);
   const router = useRouter();
   const pathname = usePathname();
-
-  const [authReady, setAuthReady] = useState(false); // ✅ add ready flag
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     if (loading) return;
 
+    const isAuthPage = pathname === "/login" || pathname === "/signup";
+
+
+    // When user has not logged or 
     if (!user) {
       clearUser();
-      router.push("/login");
+
+      if (!isAuthPage) {
+        router.replace("/login");
+        return;
+      }
+
+      setAuthReady(true);
       return;
     }
 
     const isAdminRoute = pathname.startsWith("/admin/dashboard");
     const isUserRoute = pathname.startsWith("/dashboard");
-    const isAuthPage = pathname === "/login" || pathname === "/signup";
 
     if (isAdminRoute && user.role !== "admin") {
       router.push("/dashboard");
@@ -32,17 +40,11 @@ export const useUserAuth = () => {
       return;
     }
 
-    // If user is logged in and visits login/signup, redirect them to their correct dashboard
     if (isAuthPage) {
-      if (user.role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      router.replace(user.role === "admin" ? "/admin/dashboard" : "/dashboard");
       return;
     }
 
-    // ✅ All checks passed
     setAuthReady(true);
   }, [user, loading, pathname, clearUser, router]);
 

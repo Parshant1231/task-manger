@@ -7,11 +7,12 @@ import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { getFirstName } from "@/utils/helper";
+import Loading from "@/app/loading";
 
 export default function SideMenu() {
-  const { user, clearUser } = useContext(userContext);
+  const { user, loading, clearUser } = useContext(userContext);
   const [sideMenuData, setSideMenuData] = useState<typeof SIDE_MENU_DATA>([]);
-
+  const [errorImage, setErrorImage] = useState(false);
   const pathname = usePathname();
   const navigate = useRouter();
 
@@ -20,8 +21,8 @@ export default function SideMenu() {
       localStorage.clear();
       clearUser();
       navigate.push("/login");
+      return; // ✅ prevent second push
     }
-
     navigate.push(route);
   };
 
@@ -33,15 +34,30 @@ export default function SideMenu() {
     }
     return () => {};
   }, [user]);
+
+  if (loading) return <Loading />;
   return (
     <div className="w-64 h-[calc(100vh-61px)] bg-white order-r border-gray-200/50 sticky top-[61px] z-20 ">
       <div className="flex flex-col items-center justify-center mb-7 pt-5">
         <div className="relative w-20 h-20 rounded-full overflow-hidden shadow-md ring-2 ring-primary">
-          <img
-            src={user?.profileImageUrl || "/default.png"}
-            alt="Profile"
-            className="object-cover w-full h-full"
-          />
+          {user?.profileImageUrl ? (
+            <Image
+              src={errorImage ? "/default.png" : user.profileImageUrl}
+              alt="Profile"
+              width={80}
+              height={80}
+              className="object-cover w-full h-full rounded-full"
+              onError={() => setErrorImage(true)}
+            />
+          ) : (
+            <Image
+              src="/default.png"
+              alt="Default Profile"
+              width={80}
+              height={80}
+              className="object-cover w-full h-full rounded-full"
+            />
+          )}
         </div>
 
         {user?.role === "admin" && (

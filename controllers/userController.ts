@@ -14,6 +14,7 @@ export const getUsers = async () => {
         role: true,
         createdAt: true,
         updatedAt: true,
+        profileImageUrl: true
         // exclude password
       },
     });
