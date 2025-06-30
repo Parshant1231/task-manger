@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { LuUsers } from "react-icons/lu";
 import { Modal } from "../Model";
 import Image from "next/image";
+import { AvatarGroup } from "../AvtarGroup";
 
 type SelectUsersProps = {
   selectedUsers: string[]; // or User[] if you're using user objects
@@ -30,7 +31,7 @@ export const SelectUsers = ({
   const getAllUsers = async () => {
     try {
       const response = await axiosInstance.get(API_PATHS.USERS.GET_ALL_USERS);
-      console.log("All users response:", response.data); // 👈 ADD THIS
+      // console.log("All users response:", response.data); // 👈 ADD THIS
 
       if (response.data?.length > 0) {
         setAllUsers(response.data);
@@ -60,12 +61,6 @@ export const SelectUsers = ({
   useEffect(() => {
     getAllUsers();
   }, []);
-  useEffect(() => {
-    console.log(
-      "User Avatars:",
-      allUsers.map((u) => u.profileImageUrl)
-    );
-  }, [allUsers]);
 
   return (
     <div className="space-y-4 mt-2">
@@ -81,25 +76,8 @@ export const SelectUsers = ({
         </button>
       )}
       {selectedUserAvatars.length > 0 && (
-        <div className="flex items-center gap-2">
-          {selectedUserAvatars.map((avatar, index) => (
-            <img
-              key={index}
-              src={avatar}
-              alt="User"
-              className="w-8 h-8 rounded-full border border-white shadow"
-            />
-          ))}
-
-          <button
-            className="text-sm text-blue-500 underline"
-            onClick={() => {
-              setTempSelectedUsers(selectedUsers); // ✅ sync with selected
-              setIsModalOpen(true);
-            }}
-          >
-            Change Members
-          </button>
+        <div className="cursor-pointer" onClick={() => setIsModalOpen(true)}>
+            <AvatarGroup avatars={selectedUserAvatars} maxVisible={3} />
         </div>
       )}
 
@@ -143,6 +121,15 @@ export const SelectUsers = ({
               </div>
             );
           })}
+        </div>
+
+        <div className="flex justify-end gap-4 pt-4">
+          <button className="card-btn" onClick={() => setIsModalOpen(false)}>
+            CANCEL
+          </button>
+          <button className="card-btn-fill" onClick={handleAssign}>
+            DONE
+          </button>
         </div>
       </Modal>
     </div>

@@ -4,15 +4,16 @@ type TaskData = {
   title: string;
   description: string;
   priority: Priority;
-  dueDate: string ; // or Date | null if using Date objects
+  dueDate: string; // or Date | null if using Date objects
   assignedTo: string[]; // or User[] if using full user objects
   todoCheckList: string[];
-  attachments: File[]; // or your custom file type
+  attachments: string[]; // or your custom file type
 };
 
-
+import { AddAttachmentsInput } from "@/Components/Inputs/AddAttachmentsInput";
 import { SelectDropdown } from "@/Components/Inputs/SelectDropdown";
 import { SelectUsers } from "@/Components/Inputs/SelectUsers";
+import TodoListInput from "@/Components/Inputs/TodoListInput";
 import { PRIORITY_DATA } from "@/utils/data";
 import { Priority } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -26,15 +27,15 @@ export default function CreateTask() {
 
   const taskId = searchParams.get("taskId"); // ✅ like getting location.state.taskId
 
-const [taskData, setTaskData] = useState<TaskData>({
-  title: "",
-  description: "",
-  priority: Priority.Low,
-  dueDate: "",
-  assignedTo: [],
-  todoCheckList: [],
-  attachments: [],
-});
+  const [taskData, setTaskData] = useState<TaskData>({
+    title: "",
+    description: "",
+    priority: Priority.Low,
+    dueDate: "",
+    assignedTo: [],
+    todoCheckList: [],
+    attachments: [],
+  });
 
   const [currentTask, setCurrentTask] = useState(null);
   const [error, setError] = useState("");
@@ -165,7 +166,7 @@ const [taskData, setTaskData] = useState<TaskData>({
                   type="date"
                 />
               </div>
-              
+
               <div className="col-span-12 md:col-span-3">
                 <label className="text-xs font-medium text-slate-600">
                   Assign To
@@ -177,8 +178,32 @@ const [taskData, setTaskData] = useState<TaskData>({
                   }}
                 />
               </div>
-              
             </div>
+
+            <div className="mt-3">
+              <label className="text-xs font-medium text-slate-600">
+                TODO Checklist
+              </label>
+              <TodoListInput
+                todoList={taskData?.todoCheckList}
+                setTodoList={(value) =>
+                  handleValueChange("todoCheckList", value)
+                }
+              />
+            </div>
+
+            <div className="mt-3">
+              <label className="text-xs font-medium text-slate-600">
+                Add Attachments
+              </label>
+              <AddAttachmentsInput
+                attachments={taskData?.attachments}
+                setAttachments={(value: any) =>
+                  handleValueChange("attachments", value)
+                }
+              />
+            </div>
+
           </div>
         </div>
       </div>
