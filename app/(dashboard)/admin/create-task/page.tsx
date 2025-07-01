@@ -1,14 +1,6 @@
 "use client";
 
-type TaskData = {
-  title: string;
-  description: string;
-  priority: Priority;
-  dueDate: string; // or Date | null if using Date objects
-  assignedTo: string[]; // or User[] if using full user objects
-  todoChecklist: string[];
-  attachments: string[]; // or your custom file type
-};
+
 
 import { AddAttachmentsInput } from "@/Components/Inputs/AddAttachmentsInput";
 import { SelectDropdown } from "@/Components/Inputs/SelectDropdown";
@@ -21,7 +13,9 @@ import { Priority } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
+import moment from "moment";
+import { TaskData } from "@/utils/dataTypes";
 
 export default function CreateTask() {
   const router = useRouter();
@@ -44,6 +38,8 @@ export default function CreateTask() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
+
+  if (!taskId) return;
 
   const handleValueChange = (key: string, value: any) => {
     setTaskData((prev) => ({ ...prev, [key]: value }));
@@ -128,7 +124,32 @@ export default function CreateTask() {
   };
 
   // Get Task info by Id
-  const getTaskDetailsByID = async () => {};
+  const getTaskDetailsByID = async () => {
+    try {
+      const response = await axiosInstance.get(
+        API_PATHS.TASKS.GET_TASK_BY_ID(taskId)
+      );
+
+      const taskInfo = response.data;
+      if (taskInfo) {
+        setCurrentTask(taskInfo);
+
+        setTaskData({
+          title: taskInfo.title,
+          description: taskInfo.description,
+          priority: taskInfo.priority,
+          dueDate: taskInfo.dueDate
+            ? moment(taskInfo.dueDate).format("YYYY-MM-DD")
+            : "",
+          assignedTo: taskInfo.assignedTo?.map((user: any) => user.id) || [],
+          todoChecklist: taskInfo.todoChecklist?.map((item: any) => item.text) || [],
+          attachments: taskInfo.attachments || [],
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching task:", error);
+    }
+  };
 
   // Delete Task
   const deleteTask = async () => {};

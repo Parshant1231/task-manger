@@ -55,6 +55,12 @@ export type BarChartItem = {
 // TASKS DATA TYPES
 // ====================
 
+export interface AssignedToType {
+  id: string;
+  name: string;
+  email: string;
+  profileImageUrl: string;
+}
 
 export interface TaskType {
   id: string;
@@ -65,12 +71,7 @@ export interface TaskType {
   progress: number;
   createdAt: string;
   dueDate: string;
-  assignedTo: {
-    id: string;
-    name: string;
-    email: string;
-    profileImageUrl: string;
-  }[];
+  assignedTo: AssignedToType[];
   attachments: {
     url: string;
   }[];
@@ -81,19 +82,32 @@ export interface TaskType {
   }[];
 }
 
-
 export interface StatusTab {
   label: string;
   count: number;
 }
 
-
 export interface TaskStatusTabsProps {
-    tabs: StatusTab[];
-    activeTab: string;
-    setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  tabs: StatusTab[];
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
 }
 export type TaskCardProps = Omit<TaskType, "assignedTo"> & {
   assignedTo: string[]; // profileImageUrl[] only
   onClick: () => void;
+};
+
+// export type TaskData = Omit<TaskType, "id" | "status" | "progress" | "createdAt" | "attachments" | "todoChecklist" | "completedTodoCount"> & {
+//   todoChecklist: string[];
+//   attachments: string[];
+// }
+
+export type TaskData = {
+  title: string;
+  description: string;
+  priority: Priority;
+  dueDate: string; // or Date | null if using Date objects
+  assignedTo: string[]; // or User[] if using full user objects
+  todoChecklist: string[];
+  attachments: string[]; // or your custom file type
 };
