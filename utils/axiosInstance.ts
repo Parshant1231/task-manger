@@ -1,3 +1,14 @@
+//====================//
+// Then automatically:
+//====================//
+
+// The token is added.
+// If the token is invalid, user is redirected to /login.
+// If the server is down, it logs an error.
+// If it times out, it shows a timeout message.
+
+
+
 // lib/axiosInstance.ts
 import axios from "axios";
 

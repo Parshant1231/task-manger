@@ -18,9 +18,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   
 
   return (
-    <div key={user?.role}>
+    <div key={user?.role} className="min-h-screen flex flex-col" >
       <Navbar />
-      <div className="flex bg-gray-50">
+      <div className="flex flex-1  bg-gray-50">
         <div className="max-[1080px]:hidden">
           <SideMenu />
         </div>

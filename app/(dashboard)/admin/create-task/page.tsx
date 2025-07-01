@@ -6,7 +6,7 @@ type TaskData = {
   priority: Priority;
   dueDate: string; // or Date | null if using Date objects
   assignedTo: string[]; // or User[] if using full user objects
-  todoCheckList: string[];
+  todoChecklist: string[];
   attachments: string[]; // or your custom file type
 };
 
@@ -14,11 +14,14 @@ import { AddAttachmentsInput } from "@/Components/Inputs/AddAttachmentsInput";
 import { SelectDropdown } from "@/Components/Inputs/SelectDropdown";
 import { SelectUsers } from "@/Components/Inputs/SelectUsers";
 import TodoListInput from "@/Components/Inputs/TodoListInput";
+import { API_PATHS } from "@/utils/apiPaths";
+import axiosInstance from "@/utils/axiosInstance";
 import { PRIORITY_DATA } from "@/utils/data";
 import { Priority } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
+import { toast } from 'react-hot-toast';
 
 export default function CreateTask() {
   const router = useRouter();
@@ -33,12 +36,12 @@ export default function CreateTask() {
     priority: Priority.Low,
     dueDate: "",
     assignedTo: [],
-    todoCheckList: [],
+    todoChecklist: [],
     attachments: [],
   });
 
   const [currentTask, setCurrentTask] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
 
@@ -53,16 +56,36 @@ export default function CreateTask() {
       priority: Priority.Low,
       dueDate: "",
       assignedTo: [],
-      todoCheckList: [],
+      todoChecklist: [],
       attachments: [],
     });
   };
 
   // Create Task
   const createTask = async () => {
-    // Call your backend API
-    console.log("Creating task...", taskData);
-    // await fetch('/api/tasks', { method: 'POST', body: JSON.stringify(taskData) });
+    setLoading(true);
+
+    try {
+      const todolist = taskData.todoChecklist?.map((item: string) => ({
+        text: item,
+        completed: false,
+      }));
+
+      const response = await axiosInstance.post(API_PATHS.TASKS.CREATE_TASK, {
+        ...taskData,
+        dueDate: new Date(taskData.dueDate).toISOString(),
+        todoChecklist: todolist,
+      });
+
+      toast.success("Task Created Successfully");
+
+      clearData();
+    } catch (error: any) {
+      console.error("Error creating task:", error);
+      toast.error(error?.response?.data?.message || "Failed to create task.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Update Task
@@ -72,14 +95,36 @@ export default function CreateTask() {
   };
 
   const handleSubmit = async () => {
-    if (taskId) {
-      await updateTask();
-    } else {
-      await createTask();
+    setError(null);
+    // Input validation
+    if (!taskData.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    if (!taskData.description.trim()) {
+      setError("Description is required.");
+      return;
+    }
+    if (!taskData.dueDate) {
+      setError("Due date is required.");
+      return;
     }
 
-    clearData();
-    router.push("/dashboard"); // or any route you prefer
+    if (taskData.assignedTo?.length === 0) {
+      setError("Task not assigned to any member");
+      return;
+    }
+
+    if (taskData.todoChecklist?.length === 0) {
+      setError("Add atleast one todo task");
+      return;
+    }
+
+    if (taskId) {
+      updateTask();
+      return;
+    }
+    createTask();
   };
 
   // Get Task info by Id
@@ -108,7 +153,7 @@ export default function CreateTask() {
                 </button>
               )}
             </div>
-            {/* Task Title & description */}
+            {/* Task Title */}
             <div className="mt-4">
               <label className="text-sm font-medium text-slate-600">
                 Task Title
@@ -123,6 +168,7 @@ export default function CreateTask() {
                 }
               />
             </div>
+            {/* Task description */}
             <div className="mt-3">
               <label className="tet-sm font-medium text-slate-600">
                 Description
@@ -139,6 +185,7 @@ export default function CreateTask() {
               />
             </div>
 
+            {/* Task Priority */}
             <div className="grid grid-cols-12 gap-4 mt-2">
               <div className="col-span-6 md:col-span-4">
                 <label className="text-xs font-medium text-slate-600">
@@ -180,18 +227,20 @@ export default function CreateTask() {
               </div>
             </div>
 
+            {/* Task Checklist */}
             <div className="mt-3">
               <label className="text-xs font-medium text-slate-600">
                 TODO Checklist
               </label>
               <TodoListInput
-                todoList={taskData?.todoCheckList}
+                todoList={taskData?.todoChecklist}
                 setTodoList={(value) =>
-                  handleValueChange("todoCheckList", value)
+                  handleValueChange("todoChecklist", value)
                 }
               />
             </div>
 
+            {/* Task Attachments */}
             <div className="mt-3">
               <label className="text-xs font-medium text-slate-600">
                 Add Attachments
@@ -204,6 +253,19 @@ export default function CreateTask() {
               />
             </div>
 
+            {/* Submit & */}
+            {error && (
+              <p className="text-xs font-medium text-red-500 mt-5">{error}</p>
+            )}
+            <div className="flex justify-end mt-7">
+              <button
+                className="add-btn"
+                onClick={handleSubmit}
+                disabled={loading}
+              >
+                {taskId ? "UPDATE TASK" : "CREATE TASK"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
