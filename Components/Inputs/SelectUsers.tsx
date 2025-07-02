@@ -68,7 +68,7 @@ export const SelectUsers = ({
         <button
           className="card-btn"
           onClick={() => {
-            setTempSelectedUsers(selectedUsers); // ✅ sync with selected
+            setTempSelectedUsers(selectedUsers);
             setIsModalOpen(true);
           }}
         >

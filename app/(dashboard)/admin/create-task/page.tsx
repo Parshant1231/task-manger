@@ -14,6 +14,9 @@ import { LuTrash2 } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 import moment from "moment";
 import { CurrentTask, TaskData, TodoItem } from "@/utils/dataTypes";
+import Loading from "@/app/loading";
+import { Modal } from "@/Components/Model";
+import DeleteAlert from "@/Components/DeleteAlert";
 
 export default function CreateTask() {
   const router = useRouter();
@@ -57,7 +60,7 @@ export default function CreateTask() {
 
   // Create Task
   const createTask = async () => {
-    setLoading(true);
+    setIsLoadingTask(true);
 
     try {
       const todolist = taskData.todoChecklist?.map((item: string) => ({
@@ -78,48 +81,47 @@ export default function CreateTask() {
       console.error("Error creating task:", error);
       toast.error(error?.response?.data?.message || "Failed to create task.");
     } finally {
-      setLoading(false);
+      setIsLoadingTask(false);
     }
   };
 
   // Update Task
   const updateTask = async () => {
-    // setLoading(true);
+    setIsLoadingTask(true);
 
+    try {
+      const todolist = taskData.todoChecklist?.map((item: string) => {
+        const prevTodoChecklist = currentTask?.todoChecklist || [];
 
-    // try {
-    //   const todolist = taskData.todoChecklist?.map((item: string) => {
-    //     const prevTodoChecklist = currentTask?.todoChecklist || [];
+        const matchedTask = prevTodoChecklist.find(
+          (task) => task.text === item
+        );
 
-    //     const matchedTask = prevTodoChecklist.find(
-    //       (task) => task.text === item
-    //     );
+        return {
+          text: item,
+          completed: matchedTask ? matchedTask.completed : false,
+        };
+      });
 
-    //     return {
-    //       text: item,
-    //       completed: matchedTask ? matchedTask.completed : false,
-    //     };
-    //   });
+      const cleanedAttachments = taskData.attachments?.filter((url) => !!url);
 
-    //   const cleanedAttachments = taskData.attachments?.filter((url) => !!url);
-    //   const cleanedAssignedTo = taskData.assignedTo?.filter((id) => !!id);
+      const cleanedAssignedTo = taskData.assignedTo?.filter((id) => !!id);
 
-    //   await axiosInstance.put(API_PATHS.TASKS.UPDATE_TASK(validTaskId), {
-    //     ...taskData,
-    //     dueDate: new Date(taskData.dueDate).toISOString(),
-    //     assignedTo: cleanedAssignedTo,
-    //     todoChecklist: todolist,
-    //     attachments: cleanedAttachments,
-    //   });
+      await axiosInstance.put(API_PATHS.TASKS.UPDATE_TASK(validTaskId), {
+        ...taskData,
+        dueDate: new Date(taskData.dueDate).toISOString(),
+        assignedTo: cleanedAssignedTo,
+        todoChecklist: todolist,
+        attachments: cleanedAttachments,
+      });
 
-    //   toast.success("Task Updated Successfully");
-    //   await getTaskDetailsByID();
-    // } catch (error: any) {
-    //   console.error("Error creating task:", error);
-    //   toast.error(error?.response?.data?.message || "Failed to create task.");
-    // } finally {
-    //   setLoading(false);
-    // }
+      toast.success("Task Updated Successfully");
+    } catch (error: any) {
+      console.error("Error creating task:", error);
+      toast.error(error?.response?.data?.message || "Failed to create task.");
+    } finally {
+      setIsLoadingTask(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -148,18 +150,17 @@ export default function CreateTask() {
       return;
     }
 
-    if (taskId) {
+    if (validTaskId) {
       updateTask();
       return;
-    } 
-      createTask();
-    
+    }
+    createTask();
   };
 
   // Get Task info by Id
   const getTaskDetailsByID = async () => {
     setIsLoadingTask(true);
-    
+
     try {
       const response = await axiosInstance.get(
         API_PATHS.TASKS.GET_TASK_BY_ID(validTaskId)
@@ -168,8 +169,6 @@ export default function CreateTask() {
       if (response.data) {
         const taskInfo = response.data.task;
         setCurrentTask(taskInfo);
-        console.log(taskInfo);
-        console.log("Assigned To is : " + taskInfo.assignedTo)
 
         setTaskData({
           title: taskInfo.title,
@@ -181,10 +180,9 @@ export default function CreateTask() {
           assignedTo: taskInfo.assignedTo?.map((user: any) => user.id) || [],
           todoChecklist:
             taskInfo.todoChecklist?.map(
-              (item: { text: string }) => item.text 
+              (item: { text: string }) => item.text
             ) || [],
-          attachments: taskInfo.attachments?.map((a: { url: string }) => a.url) || [],
-
+          attachments: taskInfo.attachments || [],
         });
       }
     } catch (error) {
@@ -195,21 +193,29 @@ export default function CreateTask() {
   };
 
   // Delete Task
-  const deleteTask = async () => {};
+  const deleteTask = async () => {
+    try {
+      await axiosInstance.delete(API_PATHS.TASKS.DELETE_TASK(validTaskId));
+
+      setOpenDeleteAlert(false);
+      toast.success("Expense details deleted successfully");
+      router.replace("/admin/tasks");
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
 
   useEffect(() => {
-    if (taskId) {
+    if (validTaskId) {
       getTaskDetailsByID();
+    } else {
+      setIsLoadingTask(false); // ✅ Mark loading as done when no taskId
     }
-  }, [taskId]);
+  }, [validTaskId]);
 
-  // if (isLoadingTask) {
-  //   return (
-  //     <p className="text-center text-sm text-gray-500">
-  //       Loading task details...
-  //     </p>
-  //   );
-  // }
+  if (isLoadingTask) {
+    return <Loading />;
+  }
 
   return (
     <div>
@@ -219,10 +225,10 @@ export default function CreateTask() {
           <div className="form-card col-span-3">
             <div className="flex items-center justify-center">
               <h2 className="text-xl md:text-xl font-medium">
-                {taskId ? "Update Task" : "Create Task"}
+                {validTaskId ? "Update Task" : "Create Task"}
               </h2>
 
-              {taskId && (
+              {validTaskId && (
                 <button
                   className="flex items-center gap-1.5 ml-2 text-[13px] font-medium text-rose-500 bg-rose-50 rounded px-2 py-1 border border-rose-100 hover:border-rose-300 cursor-pointer"
                   onClick={() => setOpenDeleteAlert(true)}
@@ -339,14 +345,25 @@ export default function CreateTask() {
               <button
                 className="add-btn"
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={isLoadingTask}
               >
-                {taskId ? "UPDATE TASK" : "CREATE TASK"}
+                {validTaskId ? "UPDATE TASK" : "CREATE TASK"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={openDeleteAlert}
+        onClose={() => setOpenDeleteAlert(false)}
+        title="Delete Task"
+      >
+        <DeleteAlert
+          content="Are you sure you want to delete this task?"
+          onDelete={() => deleteTask()}
+        />
+      </Modal>
     </div>
   );
 }

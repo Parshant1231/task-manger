@@ -26,6 +26,7 @@ export default function Dashboard() {
   );
   const [pieChartData, setPieChartData] = useState<PieChartItem[]>([]);
   const [barChartData, setBarChartData] = useState<BarChartItem[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   // Prepare Chart Data
   const prepareChartData = (charts: any) => {
@@ -52,6 +53,8 @@ export default function Dashboard() {
   // Get the all dashboard data like statistics, charts, recentTasks evaluate from the API
   const getDashboardData = async () => {
     try {
+      setIsLoadingData(true);
+
       const response = await axiosInstance.get(
         API_PATHS.TASKS.GET_DASHBOARD_DATA
       );
@@ -64,6 +67,8 @@ export default function Dashboard() {
     } catch (error) {
       console.log("Error might be: ", error);
       throw error;
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -77,6 +82,9 @@ export default function Dashboard() {
     return () => {};
   }, []);
 
+  if (isLoadingData || loading) {
+    return <Loading />;
+  }
 
   return (
     <div className="bg-gray-50">

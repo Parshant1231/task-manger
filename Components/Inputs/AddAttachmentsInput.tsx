@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HiMiniPlus, HiOutlineTrash } from "react-icons/hi2";
 import { LuPaperclip } from "react-icons/lu";
 
@@ -15,22 +15,35 @@ export const AddAttachmentsInput = ({
 }: AddAttachmentsInputProps) => {
   // Handle file input change
   const [option, setOption] = useState("");
+  const [localAttachments, setLocalAttachments] = useState<string[]>([]);
+
+  // ✅ Sync when parent updates `attachments` (like after updateTask fetch)
+  useEffect(() => {
+    // console.log("attachments prop updated to:", attachments);
+    setLocalAttachments(attachments);
+  }, [attachments]);
+
   const handleAddOption = () => {
-    if( option.trim()) {
-        setAttachments([...attachments, option.trim()]);
-        setOption("");
-    }
+    const trimmed = option.trim();
+    if (!trimmed) return;
+
+    const updated = [...localAttachments, trimmed];
+    setLocalAttachments(updated);
+    setAttachments(updated);
+    setOption("");
   };
 
   // Delete a file by index
   const handleDeleteOption = (index: number) => {
-    const updatedArr = attachments.filter((_, idx) => idx !== index);
-    setAttachments(updatedArr);
+    const updated = [...localAttachments];
+    updated.splice(index, 1);
+    setLocalAttachments(updated);
+    setAttachments(updated);
   };
 
   return (
     <div>
-      {attachments.map((item, index) => (
+      {localAttachments.map((item, index) => (
         <div
           key={index}
           className="flex justify-between bg-gray-50 border border-gray-100 px-3 py-2 rounded-md mb-3 mt-2"
@@ -63,14 +76,10 @@ export const AddAttachmentsInput = ({
           />
         </div>
 
-        <button
-          className="card-btn text-nowrap "
-          onClick={handleAddOption}
-        >
+        <button className="card-btn text-nowrap " onClick={handleAddOption}>
           <HiMiniPlus className="text-lg" /> Add{" "}
         </button>
       </div>
     </div>
   );
 };
- 

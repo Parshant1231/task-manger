@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/app/loading";
 import { TaskCard } from "@/Components/Cards/TaskCard";
 import { TaskStatusTabs } from "@/Components/TaskStatusTabs";
 import { API_PATHS } from "@/utils/apiPaths";
@@ -13,11 +14,14 @@ export default function ManageTask() {
   const [allTasks, setAllTasks] = useState<TaskType[]>([]);
   const [tabs, setTabs] = useState<StatusTab[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   const router = useRouter();
 
   const getAllTasks = async (status: string) => {
     try {
+      setIsLoadingData(true);
+
       const response = await axiosInstance.get(API_PATHS.TASKS.GET_ALL_TASKS, {
         params: {
           status: filterStatus === "All" ? "" : filterStatus,
@@ -41,6 +45,8 @@ export default function ManageTask() {
       setTabs(statusArray);
     } catch (error) {
       console.error("Error fetching users: ", error);
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -55,6 +61,10 @@ export default function ManageTask() {
     getAllTasks(filterStatus);
     return () => {};
   }, [filterStatus]);
+
+  if(isLoadingData) {
+    return <Loading />
+  }
 
   return (
     <div>
