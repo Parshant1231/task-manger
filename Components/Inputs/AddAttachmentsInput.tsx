@@ -32,7 +32,7 @@ export const AddAttachmentsInput = ({
     <div>
       {attachments.map((item, index) => (
         <div
-          key={item}
+          key={index}
           className="flex justify-between bg-gray-50 border border-gray-100 px-3 py-2 rounded-md mb-3 mt-2"
         >
           <div className="flex-1 flex items-center gap-3 border border-gray-100">

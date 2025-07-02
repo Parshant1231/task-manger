@@ -22,7 +22,7 @@ export const API_PATHS = {
     UPDATE_TASK: (taskId: string) => `/api/tasks/${taskId}`, // PUT - Update
     DELETE_TASK: (taskId: string) => `/api/tasks/${taskId}`, // DELETE - Delete
     UPDATE_TASK_STATUS: (taskId: string) => `/api/tasks/${taskId}/status`, // PATCH - Status
-    UPDATE_TODO_CHECKLIST: (taskId: string) => `/api/tasks/${taskId}/todo`, // PATCH - Checklist
+  UPDATE_TODO_CHECKLIST: (taskId: string) => `/api/tasks/${taskId}/todo`, // PATCH - Checklist
   },
 
   REPORTS: {

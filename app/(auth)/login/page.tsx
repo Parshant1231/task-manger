@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { updateUser } = useContext(userContext);
 
-  const router = useRouter();
+const router = useRouter();
 
   
   const handleLogin = async (e: React.FormEvent) => {

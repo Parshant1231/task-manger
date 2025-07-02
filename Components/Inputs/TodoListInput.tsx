@@ -33,7 +33,7 @@ const TodoListInput: React.FC<TodoListInputProps> = ({
     <div>
       {todoList.map((item, index) => (
         <div
-          key={item}
+           key={`${item}-${index}`}
           className="flex justify-between bg-gray-50 border border-gray-100 px-3 py-2 rounded-md mb-3 mt-2" // Added some common classes to complete the styles based on common UI patterns
         >
           <p className="text-sm text-black">

@@ -33,7 +33,7 @@ model Task {
   assignedTo    User[]   @relation("AssignedTasks")
   createdBy     User     @relation("CreatedTasks", fields: [createdById], references: [id])
   createdById   String
-  attachments   String[]
+  attachments   Json[]
   todoChecklist Json[]
   progress      Int      @default(0)
   createdAt     DateTime @default(now())

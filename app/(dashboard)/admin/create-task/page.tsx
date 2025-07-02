@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { AddAttachmentsInput } from "@/Components/Inputs/AddAttachmentsInput";
 import { SelectDropdown } from "@/Components/Inputs/SelectDropdown";
 import { SelectUsers } from "@/Components/Inputs/SelectUsers";
@@ -11,11 +9,11 @@ import axiosInstance from "@/utils/axiosInstance";
 import { PRIORITY_DATA } from "@/utils/data";
 import { Priority } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 import moment from "moment";
-import { TaskData } from "@/utils/dataTypes";
+import { CurrentTask, TaskData, TodoItem } from "@/utils/dataTypes";
 
 export default function CreateTask() {
   const router = useRouter();
@@ -23,6 +21,7 @@ export default function CreateTask() {
   const searchParams = useSearchParams();
 
   const taskId = searchParams.get("taskId"); // ✅ like getting location.state.taskId
+  const validTaskId = taskId as string;
 
   const [taskData, setTaskData] = useState<TaskData>({
     title: "",
@@ -32,14 +31,13 @@ export default function CreateTask() {
     assignedTo: [],
     todoChecklist: [],
     attachments: [],
-  });
+  } as TaskData);
 
-  const [currentTask, setCurrentTask] = useState(null);
+  const [currentTask, setCurrentTask] = useState<CurrentTask | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
-
-  if (!taskId) return;
+  const [isLoadingTask, setIsLoadingTask] = useState(true);
 
   const handleValueChange = (key: string, value: any) => {
     setTaskData((prev) => ({ ...prev, [key]: value }));
@@ -86,8 +84,42 @@ export default function CreateTask() {
 
   // Update Task
   const updateTask = async () => {
-    console.log("Updating task...", taskData);
-    // await fetch(`/api/tasks/${taskId}`, { method: 'PUT', body: JSON.stringify(taskData) });
+    // setLoading(true);
+
+
+    // try {
+    //   const todolist = taskData.todoChecklist?.map((item: string) => {
+    //     const prevTodoChecklist = currentTask?.todoChecklist || [];
+
+    //     const matchedTask = prevTodoChecklist.find(
+    //       (task) => task.text === item
+    //     );
+
+    //     return {
+    //       text: item,
+    //       completed: matchedTask ? matchedTask.completed : false,
+    //     };
+    //   });
+
+    //   const cleanedAttachments = taskData.attachments?.filter((url) => !!url);
+    //   const cleanedAssignedTo = taskData.assignedTo?.filter((id) => !!id);
+
+    //   await axiosInstance.put(API_PATHS.TASKS.UPDATE_TASK(validTaskId), {
+    //     ...taskData,
+    //     dueDate: new Date(taskData.dueDate).toISOString(),
+    //     assignedTo: cleanedAssignedTo,
+    //     todoChecklist: todolist,
+    //     attachments: cleanedAttachments,
+    //   });
+
+    //   toast.success("Task Updated Successfully");
+    //   await getTaskDetailsByID();
+    // } catch (error: any) {
+    //   console.error("Error creating task:", error);
+    //   toast.error(error?.response?.data?.message || "Failed to create task.");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleSubmit = async () => {
@@ -119,20 +151,25 @@ export default function CreateTask() {
     if (taskId) {
       updateTask();
       return;
-    }
-    createTask();
+    } 
+      createTask();
+    
   };
 
   // Get Task info by Id
   const getTaskDetailsByID = async () => {
+    setIsLoadingTask(true);
+    
     try {
       const response = await axiosInstance.get(
-        API_PATHS.TASKS.GET_TASK_BY_ID(taskId)
+        API_PATHS.TASKS.GET_TASK_BY_ID(validTaskId)
       );
 
-      const taskInfo = response.data;
-      if (taskInfo) {
+      if (response.data) {
+        const taskInfo = response.data.task;
         setCurrentTask(taskInfo);
+        console.log(taskInfo);
+        console.log("Assigned To is : " + taskInfo.assignedTo)
 
         setTaskData({
           title: taskInfo.title,
@@ -142,17 +179,37 @@ export default function CreateTask() {
             ? moment(taskInfo.dueDate).format("YYYY-MM-DD")
             : "",
           assignedTo: taskInfo.assignedTo?.map((user: any) => user.id) || [],
-          todoChecklist: taskInfo.todoChecklist?.map((item: any) => item.text) || [],
-          attachments: taskInfo.attachments || [],
+          todoChecklist:
+            taskInfo.todoChecklist?.map(
+              (item: { text: string }) => item.text 
+            ) || [],
+          attachments: taskInfo.attachments?.map((a: { url: string }) => a.url) || [],
+
         });
       }
     } catch (error) {
       console.error("Error fetching task:", error);
+    } finally {
+      setIsLoadingTask(false);
     }
   };
 
   // Delete Task
   const deleteTask = async () => {};
+
+  useEffect(() => {
+    if (taskId) {
+      getTaskDetailsByID();
+    }
+  }, [taskId]);
+
+  // if (isLoadingTask) {
+  //   return (
+  //     <p className="text-center text-sm text-gray-500">
+  //       Loading task details...
+  //     </p>
+  //   );
+  // }
 
   return (
     <div>
@@ -167,7 +224,7 @@ export default function CreateTask() {
 
               {taskId && (
                 <button
-                  className="flex items-center gap-1.5 text-[13px] font-medium text-rose-500 bg-rose-50 rounded px-2 py-1 border border-rose-100 hover:border-rose-300 cursor-pointer"
+                  className="flex items-center gap-1.5 ml-2 text-[13px] font-medium text-rose-500 bg-rose-50 rounded px-2 py-1 border border-rose-100 hover:border-rose-300 cursor-pointer"
                   onClick={() => setOpenDeleteAlert(true)}
                 >
                   <LuTrash2 className="text-base" /> Delete
@@ -183,7 +240,7 @@ export default function CreateTask() {
               <input
                 placeholder="Create App UI"
                 className="form-input"
-                value={taskData.title}
+                value={taskData.title || ""}
                 onChange={({ target }) =>
                   handleValueChange("title", target.value)
                 }
@@ -206,7 +263,7 @@ export default function CreateTask() {
               />
             </div>
 
-            {/* Task Priority */}
+            {/* Task Priority & Due Date & Assign To */}
             <div className="grid grid-cols-12 gap-4 mt-2">
               <div className="col-span-6 md:col-span-4">
                 <label className="text-xs font-medium text-slate-600">
@@ -241,7 +298,7 @@ export default function CreateTask() {
                 </label>
                 <SelectUsers
                   selectedUsers={taskData.assignedTo}
-                  setSelectedUsers={(value: any) => {
+                  setSelectedUsers={(value: string[]) => {
                     handleValueChange("assignedTo", value);
                   }}
                 />

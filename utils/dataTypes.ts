@@ -92,22 +92,25 @@ export interface TaskStatusTabsProps {
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
 }
+
 export type TaskCardProps = Omit<TaskType, "assignedTo"> & {
   assignedTo: string[]; // profileImageUrl[] only
   onClick: () => void;
 };
 
-// export type TaskData = Omit<TaskType, "id" | "status" | "progress" | "createdAt" | "attachments" | "todoChecklist" | "completedTodoCount"> & {
-//   todoChecklist: string[];
-//   attachments: string[];
-// }
-
-export type TaskData = {
-  title: string;
-  description: string;
-  priority: Priority;
-  dueDate: string; // or Date | null if using Date objects
-  assignedTo: string[]; // or User[] if using full user objects
-  todoChecklist: string[];
-  attachments: string[]; // or your custom file type
+export type TodoItem = {
+  text: string;
+  completed: boolean;
 };
+
+export type TaskData = Omit<TaskType, 
+  "id" | "status" | "progress" | "createdAt" | "completedTodoCount" | "attachments" | "todoChecklist"
+> & {
+  attachments: string[]; // or File[] if uploading
+  todoChecklist: string[]; // titles only for input form
+  assignedTo: string[]; // user IDs
+};
+
+export type CurrentTask = Omit<TaskData, "todoChecklist"> & {
+  todoChecklist: TodoItem[]
+}

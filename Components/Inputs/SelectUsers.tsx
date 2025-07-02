@@ -55,7 +55,7 @@ export const SelectUsers = ({
   };
 
   const selectedUserAvatars = allUsers
-    .filter((user: any) => selectedUsers.includes(user.id))
+    .filter((user: any) => user && selectedUsers.includes(user.id)) // ✅ safer filter
     .map((user: any) => user.profileImageUrl);
 
   useEffect(() => {
@@ -76,8 +76,14 @@ export const SelectUsers = ({
         </button>
       )}
       {selectedUserAvatars.length > 0 && (
-        <div className="cursor-pointer" onClick={() => setIsModalOpen(true)}>
-            <AvatarGroup avatars={selectedUserAvatars} maxVisible={3} />
+        <div
+          className="cursor-pointer"
+          onClick={() => {
+            setTempSelectedUsers(selectedUsers); // ✅ important
+            setIsModalOpen(true);
+          }}
+        >
+          <AvatarGroup avatars={selectedUserAvatars} maxVisible={3} />
         </div>
       )}
 
