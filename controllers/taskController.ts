@@ -138,6 +138,7 @@ export const getTaskById = async (id: string) => {
       include: {
         assignedTo: {
           select: {
+            id: true,
             name: true,
             email: true,
             profileImageUrl: true,
@@ -280,7 +281,14 @@ export const updateTask = async (req: NextRequest, id: string) => {
       where: { id },
       data: updatedData,
       include: {
-        assignedTo: { select: { id: true } }, // ✅ include relation
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImageUrl: true,
+          },
+        },
       },
     });
 

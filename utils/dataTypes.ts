@@ -102,12 +102,24 @@ export type TaskCardProps = Omit<TaskType, "assignedTo"> & {
 //   attachments: string[];
 // }
 
+export interface TodoItem {
+  text: string;
+  completed: boolean;
+}
+
+
+export type UserData =  {
+  id: string;
+  name: string;
+  email: string;
+  profileImageUrl: string;
+}
 export type TaskData = {
   title: string;
   description: string;
   priority: Priority;
   dueDate: string; // or Date | null if using Date objects
-  assignedTo: string[]; // or User[] if using full user objects
-  todoChecklist: string[];
+  assignedTo: UserData[]; // or User[] if using full user objects
+  todoChecklist: TodoItem[];
   attachments: string[]; // or your custom file type
 };

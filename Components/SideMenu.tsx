@@ -7,10 +7,9 @@ import { useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { getFirstName } from "@/utils/helper";
-import Loading from "@/app/loading";
 
 export default function SideMenu() {
-  const { user, loading, clearUser } = useContext(userContext);
+  const { user, clearUser } = useContext(userContext);
   const [sideMenuData, setSideMenuData] = useState<typeof SIDE_MENU_DATA>([]);
   const [errorImage, setErrorImage] = useState(false);
   const pathname = usePathname();
@@ -35,7 +34,8 @@ export default function SideMenu() {
     return () => {};
   }, [user]);
 
-  if (loading) return <Loading />;
+  if (!user) return null;
+
   return (
     <div className="w-64 h-[calc(100vh-61px)] bg-white order-r border-gray-200/50 sticky top-[61px] z-20 ">
       <div className="flex flex-col items-center justify-center mb-7 pt-5">

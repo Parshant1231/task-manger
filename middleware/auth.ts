@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
 
 // Helper function to verify JWT and get user
 export async function authenticate(req: NextRequest) {
@@ -12,7 +13,7 @@ export async function authenticate(req: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string, role: Role };
 
     // Fetch user from database excluding password
     const user = await prisma.user.findUnique({

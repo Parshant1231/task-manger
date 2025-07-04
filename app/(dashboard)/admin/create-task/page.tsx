@@ -7,20 +7,19 @@ import TodoListInput from "@/Components/Inputs/TodoListInput";
 import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
 import { PRIORITY_DATA } from "@/utils/data";
-import { Priority } from "@prisma/client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Priority, User } from "@prisma/client";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 import moment from "moment";
-import { TaskData } from "@/utils/dataTypes";
+import { TaskData, TodoItem, UserData } from "@/utils/dataTypes";
+import { useRouter } from "next/navigation";
 
 export default function CreateTask() {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const taskId = searchParams.get("taskId"); // ✅ like getting location.state.taskId
+  const router = useRouter();
+  const taskId = searchParams.get("taskId");
 
   const [taskData, setTaskData] = useState<TaskData>({
     title: "",
@@ -32,10 +31,16 @@ export default function CreateTask() {
     attachments: [],
   });
 
-  const [currentTask, setCurrentTask] = useState(null);
+  const [currentTask, setCurrentTask] = useState<TaskData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
+  const [allUsers, setAllUsers] = useState<UserData[]>([]);
+
+  const getAllUsers = async () => {
+    const res = await axiosInstance.get(API_PATHS.USERS.GET_ALL_USERS);
+    setAllUsers(res.data);
+  };
 
   const handleValueChange = (key: string, value: any) => {
     setTaskData((prev) => ({ ...prev, [key]: value }));
@@ -58,12 +63,12 @@ export default function CreateTask() {
     setLoading(true);
 
     try {
-      const todolist = taskData.todoChecklist?.map((item: string) => ({
+      const todolist = taskData.todoChecklist?.map((item) => ({
         text: item,
         completed: false,
       }));
 
-      const response = await axiosInstance.post(API_PATHS.TASKS.CREATE_TASK, {
+      await axiosInstance.post(API_PATHS.TASKS.CREATE_TASK, {
         ...taskData,
         dueDate: new Date(taskData.dueDate).toISOString(),
         todoChecklist: todolist,
@@ -82,8 +87,40 @@ export default function CreateTask() {
 
   // Update Task
   const updateTask = async () => {
-    console.log("Updating task...", taskData);
-    // await fetch(`/api/tasks/${taskId}`, { method: 'PUT', body: JSON.stringify(taskData) });
+    setLoading(true);
+
+    if (!taskId) {
+      toast.error("Missing task ID. Cannot update task.");
+      return;
+    }
+
+    try {
+      const prevTodoChecklist: TodoItem[] = currentTask?.todoChecklist || [];
+
+      const todolist: TodoItem[] = taskData.todoChecklist.map((item) => {
+        const matched = prevTodoChecklist.find((t) => t.text === item.text);
+
+        return {
+          text: item.text,
+          completed: matched ? matched.completed : false,
+        };
+      });
+
+      const assignedlist = taskData.assignedTo.map((user: any) => user.id);
+
+      await axiosInstance.put(API_PATHS.TASKS.UPDATE_TASK(taskId), {
+        ...taskData,
+        dueDate: new Date(taskData.dueDate).toISOString(),
+        todoChecklist: todolist,
+        assignedTo: assignedlist,
+      });
+
+      toast.success("Task Updated Successfully");
+    } catch (error) {
+      console.error("Error during fetching the data ", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -126,22 +163,38 @@ export default function CreateTask() {
         API_PATHS.TASKS.GET_TASK_BY_ID(taskId)
       );
 
-      const taskInfo = response.data;
-      if (taskInfo) {
-        setCurrentTask(taskInfo);
+      const taskInfo = response.data.task; // <- confirm if this is the real object
 
-        setTaskData({
+      // console.log("assignedTo to are :", taskInfo.assignedTo);
+
+      if (!taskInfo || !taskInfo.title) {
+        console.warn("⚠️ Task data missing or malformed:", taskInfo);
+        return;
+      }
+
+      if (response.data) {
+        const newTaskData: TaskData = {
           title: taskInfo.title,
           description: taskInfo.description,
           priority: taskInfo.priority,
           dueDate: taskInfo.dueDate
             ? moment(taskInfo.dueDate).format("YYYY-MM-DD")
             : "",
-          assignedTo: taskInfo.assignedTo?.map((user: any) => user.id) || [],
+          assignedTo: taskInfo.assignedTo || [], // 👈 not mapping to user.id
+
           todoChecklist:
-            taskInfo.todoChecklist?.map((item: any) => item.text) || [],
+            taskInfo.todoChecklist?.map((item: any) => ({
+              text: item.text,
+              completed: item.completed ?? false,
+            })) || [],
+
           attachments: taskInfo.attachments || [],
-        });
+        };
+
+        setCurrentTask(taskInfo);
+        setTaskData(newTaskData);
+
+        // console.log("✅ Loaded Task Data:", newTaskData);
       }
     } catch (error) {
       console.error("Error fetching task:", error);
@@ -149,13 +202,25 @@ export default function CreateTask() {
   };
 
   // Delete Task
-  const deleteTask = async () => {};
+  const deleteTask = async () => {
+    if (!taskId) {
+      toast.error("Missing task ID. Cannot update task.");
+      return;
+    }
+    await axiosInstance.delete(API_PATHS.TASKS.DELETE_TASK(taskId));
+
+    setOpenDeleteAlert(false);
+    toast.success("Expense details deleted successfully");
+    router.replace("/admin/tasks")
+  };
 
   useEffect(() => {
     if (!taskId) return;
-    console.log("tASK ID IS",taskId)
+    // console.log("tASK ID IS", taskId);
+    // console.log("📦 Updated TaskData:", taskData);
 
     getTaskDetailsByID(taskId); // Pass as non-null string
+    getAllUsers();
   }, [taskId]);
 
   return (
@@ -165,7 +230,7 @@ export default function CreateTask() {
         <div className="grid grid-cols-1 md:grid-col-4 mt-4">
           <div className="form-card col-span-3">
             <div className="flex items-center justify-center">
-              <h2 className="text-xl md:text-xl font-medium">
+              <h2 className="text-xl md:text-xl font-medium mr-3">
                 {taskId ? "Update Task" : "Create Task"}
               </h2>
 
@@ -244,9 +309,12 @@ export default function CreateTask() {
                   Assign To
                 </label>
                 <SelectUsers
-                  selectedUsers={taskData.assignedTo}
-                  setSelectedUsers={(value: any) => {
-                    handleValueChange("assignedTo", value);
+                  selectedUsers={taskData.assignedTo.map((u) => u.id)} // ✅ now works
+                  setSelectedUsers={(userIds) => {
+                    const matchedUsers = allUsers.filter((u) =>
+                      userIds.includes(u.id)
+                    );
+                    handleValueChange("assignedTo", matchedUsers);
                   }}
                 />
               </div>
@@ -258,10 +326,14 @@ export default function CreateTask() {
                 TODO Checklist
               </label>
               <TodoListInput
-                todoList={taskData?.todoChecklist}
-                setTodoList={(value) =>
-                  handleValueChange("todoChecklist", value)
-                }
+                todoList={taskData?.todoChecklist.map((item) => item.text)}
+                setTodoList={(texts: string[]) => {
+                  const checklist = texts.map((text) => ({
+                    text,
+                    completed: false,
+                  }));
+                  handleValueChange("todoChecklist", checklist);
+                }}
               />
             </div>
 

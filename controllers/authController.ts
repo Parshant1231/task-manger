@@ -44,7 +44,7 @@ export const registerUser = async (req: NextRequest) => {
       },
     });
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
 
     return NextResponse.json(
       {
@@ -86,7 +86,7 @@ export const loginUser = async (req: NextRequest) => {
         email: user.email,
         role: user.role,
         profileImageUrl: user.profileImageUrl,
-        token: generateToken(user.id),
+        token: generateToken(user.id, user.role),
       },
       { status: 200 }
     );
@@ -156,7 +156,7 @@ export const updateUserProfile = async (req: NextRequest, user: any) => {
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        token: generateToken(updatedUser.id),
+        token: generateToken(updatedUser.id, user.role),
       },
       { status: 200 }
     );

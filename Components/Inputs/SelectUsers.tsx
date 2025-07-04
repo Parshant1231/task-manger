@@ -7,17 +7,11 @@ import { LuUsers } from "react-icons/lu";
 import { Modal } from "../Model";
 import Image from "next/image";
 import { AvatarGroup } from "../AvtarGroup";
+import { User } from "@prisma/client";
 
 type SelectUsersProps = {
-  selectedUsers: string[]; // or User[] if you're using user objects
-  setSelectedUsers: (users: string[]) => void;
-};
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  profileImageUrl: string;
+  selectedUsers: string[]; // ✅ IDs
+  setSelectedUsers: (ids: string[]) => void;
 };
 
 export const SelectUsers = ({
@@ -26,31 +20,38 @@ export const SelectUsers = ({
 }: SelectUsersProps) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempSelectedUsers, setTempSelectedUsers] = useState<string[]>([]);
+  const [tempSelectedUsers, setTempSelectedUsers] = useState<User[]>([]);
 
   const getAllUsers = async () => {
     try {
       const response = await axiosInstance.get(API_PATHS.USERS.GET_ALL_USERS);
-      // console.log("All users response:", response.data); // 👈 ADD THIS
+      console.log("📦 Response from GET_ALL_USERS:", response.data);
 
       if (response.data?.length > 0) {
         setAllUsers(response.data);
+      } else {
+        console.warn("⚠️ No users found in response.");
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("🚨 Error fetching users:", error);
     }
   };
 
-  const toggleUserSelection = (userId: any) => {
-    setTempSelectedUsers((prev: any) =>
-      prev.includes(userId)
-        ? prev.filter((id: any) => id !== userId)
-        : [...prev, userId]
-    );
+  const toggleUserSelection = (userId: string) => {
+    setTempSelectedUsers((prev: User[]) => {
+      const exists = prev.some((user) => user.id === userId);
+
+      if (exists) {
+        return prev.filter((user) => user.id !== userId);
+      } else {
+        const newUser = allUsers.find((user) => user.id === userId);
+        return newUser ? [...prev, newUser] : prev;
+      }
+    });
   };
 
   const handleAssign = () => {
-    setSelectedUsers(tempSelectedUsers);
+    setSelectedUsers(tempSelectedUsers.map((u) => u.id));
     setIsModalOpen(false);
   };
 
@@ -68,7 +69,12 @@ export const SelectUsers = ({
         <button
           className="card-btn"
           onClick={() => {
-            setTempSelectedUsers(selectedUsers); // ✅ sync with selected
+            const selectedFullUsers = allUsers.filter((user) =>
+              selectedUsers.includes(user.id)
+            );
+            console.log("✅ Selected IDs:", selectedUsers);
+            console.log("🧠 Matching Users:", selectedFullUsers);
+            setTempSelectedUsers(selectedFullUsers); // ✅ we're now syncing correctly
             setIsModalOpen(true);
           }}
         >
@@ -76,8 +82,19 @@ export const SelectUsers = ({
         </button>
       )}
       {selectedUserAvatars.length > 0 && (
-        <div className="cursor-pointer" onClick={() => setIsModalOpen(true)}>
-            <AvatarGroup avatars={selectedUserAvatars} maxVisible={3} />
+        <div
+          className="cursor-pointer"
+          onClick={() => {
+            const selectedFullUsers = allUsers.filter((user) =>
+              selectedUsers.includes(user.id)
+            );
+            console.log("✅ Selected IDs:", selectedUsers);
+            console.log("🧠 Matching Users:", selectedFullUsers);
+            setTempSelectedUsers(selectedFullUsers); // ✅ we're now syncing correctly
+            setIsModalOpen(true);
+          }}
+        >
+          <AvatarGroup avatars={selectedUserAvatars} maxVisible={3} />
         </div>
       )}
 
@@ -114,7 +131,7 @@ export const SelectUsers = ({
 
                 <input
                   type="checkbox"
-                  checked={tempSelectedUsers.includes(user.id)}
+                  checked={tempSelectedUsers.some((u) => u.id === user.id)}
                   onChange={() => toggleUserSelection(user.id)}
                   className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded-sm outline-none"
                 />

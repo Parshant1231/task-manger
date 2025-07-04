@@ -13,30 +13,27 @@ export const useUserAuth = () => {
 
     const isAuthPage = pathname === "/login" || pathname === "/signup";
 
-
-    // When user has not logged or 
+    // No user? Redirect to login (if not already there)
     if (!user) {
       clearUser();
-
       if (!isAuthPage) {
         router.replace("/login");
-        return;
       }
-
       setAuthReady(true);
       return;
     }
 
+    // ✅ ROLE CHECK from userContext (not decoded)
     const isAdminRoute = pathname.startsWith("/admin/dashboard");
-    const isUserRoute = pathname.startsWith("/dashboard");
+    const isUserRoute = pathname.startsWith("/dashboard") && !isAdminRoute;
 
     if (isAdminRoute && user.role !== "admin") {
-      router.push("/dashboard");
+      router.replace("/dashboard");
       return;
     }
 
     if (isUserRoute && user.role !== "member") {
-      router.push("/admin/dashboard");
+      router.replace("/admin/dashboard");
       return;
     }
 
@@ -46,7 +43,7 @@ export const useUserAuth = () => {
     }
 
     setAuthReady(true);
-  }, [user, loading, pathname, clearUser, router]);
+  }, [user, loading, pathname, router, clearUser]);
 
   return { authReady };
 };
