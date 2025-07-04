@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { AddAttachmentsInput } from "@/Components/Inputs/AddAttachmentsInput";
 import { SelectDropdown } from "@/Components/Inputs/SelectDropdown";
 import { SelectUsers } from "@/Components/Inputs/SelectUsers";
@@ -11,7 +9,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { PRIORITY_DATA } from "@/utils/data";
 import { Priority } from "@prisma/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
 import { toast } from "react-hot-toast";
 import moment from "moment";
@@ -38,8 +36,6 @@ export default function CreateTask() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openDeleteAlert, setOpenDeleteAlert] = useState(false);
-
-  if (!taskId) return;
 
   const handleValueChange = (key: string, value: any) => {
     setTaskData((prev) => ({ ...prev, [key]: value }));
@@ -124,7 +120,7 @@ export default function CreateTask() {
   };
 
   // Get Task info by Id
-  const getTaskDetailsByID = async () => {
+  const getTaskDetailsByID = async (taskId: string) => {
     try {
       const response = await axiosInstance.get(
         API_PATHS.TASKS.GET_TASK_BY_ID(taskId)
@@ -142,7 +138,8 @@ export default function CreateTask() {
             ? moment(taskInfo.dueDate).format("YYYY-MM-DD")
             : "",
           assignedTo: taskInfo.assignedTo?.map((user: any) => user.id) || [],
-          todoChecklist: taskInfo.todoChecklist?.map((item: any) => item.text) || [],
+          todoChecklist:
+            taskInfo.todoChecklist?.map((item: any) => item.text) || [],
           attachments: taskInfo.attachments || [],
         });
       }
@@ -153,6 +150,13 @@ export default function CreateTask() {
 
   // Delete Task
   const deleteTask = async () => {};
+
+  useEffect(() => {
+    if (!taskId) return;
+    console.log("tASK ID IS",taskId)
+
+    getTaskDetailsByID(taskId); // Pass as non-null string
+  }, [taskId]);
 
   return (
     <div>
@@ -183,7 +187,7 @@ export default function CreateTask() {
               <input
                 placeholder="Create App UI"
                 className="form-input"
-                value={taskData.title}
+                value={taskData.title ?? ""}
                 onChange={({ target }) =>
                   handleValueChange("title", target.value)
                 }

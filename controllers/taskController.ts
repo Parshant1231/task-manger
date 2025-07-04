@@ -131,7 +131,7 @@ export const getTasks = async (req: NextRequest, user: any) => {
 };
 
 // Get a single task by ID
-export const getTaskById = async (id: string)=> {
+export const getTaskById = async (id: string) => {
   try {
     const task = await prisma.task.findUnique({
       where: { id },
@@ -153,10 +153,12 @@ export const getTaskById = async (id: string)=> {
     return NextResponse.json({ task, message: "Task fetched successfully" });
   } catch (error) {
     console.error("Error fetching task by ID:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 };
-
 
 // Create a new task
 export const createTask = async (req: NextRequest, user: any) => {
@@ -234,10 +236,7 @@ export const createTask = async (req: NextRequest, user: any) => {
 };
 
 // Update an existing task
-export const updateTask = async (
-  req: NextRequest,
-   id: string 
-) => {
+export const updateTask = async (req: NextRequest, id: string) => {
   try {
     const body = await req.json();
 
@@ -276,13 +275,35 @@ export const updateTask = async (
       todoChecklist: body.todoChecklist || undefined,
       attachments: body.attachments || undefined,
     };
+
     const updateTaskData = await prisma.task.update({
       where: { id },
       data: updatedData,
+      include: {
+        assignedTo: { select: { id: true } }, // ✅ include relation
+      },
     });
+
+    // Format clean response
+    const formattedTask = {
+      id: updateTaskData.id,
+      title: updateTaskData.title,
+      assignedTo: updateTaskData.assignedTo.map((u) => u.id),
+      attachments: updateTaskData.attachments || [],
+      createdAt: updateTaskData.createdAt,
+      updatedAt: updateTaskData.updatedAt,
+      createdBy: updateTaskData.createdById,
+      description: updateTaskData.description,
+      dueDate: updateTaskData.dueDate,
+      priority: updateTaskData.priority,
+      progress: updateTaskData.progress,
+      status: updateTaskData.status,
+      todoChecklist: updateTaskData.todoChecklist || [],
+    };
+
     // Update task in DB
     return res.json(
-      { message: "Task updated successfully", updateTaskData },
+      { message: "Task updated successfully", formattedTask },
       { status: 200 }
     );
   } catch (error) {
@@ -292,10 +313,7 @@ export const updateTask = async (
 };
 
 // Delete a task
-export const deleteTask = async (
-  req: NextRequest,
-   id: string 
-) => {
+export const deleteTask = async (req: NextRequest, id: string) => {
   try {
     // Delete task from DB
     const existingTask = await prisma.task.findUnique({
@@ -319,8 +337,8 @@ export const deleteTask = async (
 // Update task status
 export const updateTaskStatus = async (
   req: NextRequest,
-   id: string , 
-   user: any 
+  id: string,
+  user: any
 ) => {
   try {
     const body = await req.json();
@@ -396,7 +414,7 @@ export const updateTaskStatus = async (
 export const updateTaskChecklist = async (
   req: NextRequest,
   id: string,
-  user:any 
+  user: any
 ) => {
   try {
     const body = await req.json();
