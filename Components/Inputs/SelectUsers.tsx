@@ -72,8 +72,11 @@ export const SelectUsers = ({
             const selectedFullUsers = allUsers.filter((user) =>
               selectedUsers.includes(user.id)
             );
-            console.log("✅ Selected IDs:", selectedUsers);
-            console.log("🧠 Matching Users:", selectedFullUsers);
+            if (selectedUsers.length > 0 && selectedFullUsers.length === 0) {
+              console.warn(
+                "⚠️ Selected IDs found, but no matching users. Check async state."
+              );
+            }
             setTempSelectedUsers(selectedFullUsers); // ✅ we're now syncing correctly
             setIsModalOpen(true);
           }}

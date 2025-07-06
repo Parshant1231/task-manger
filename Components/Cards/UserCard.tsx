@@ -13,7 +13,7 @@ import { UserType } from "@/app/(dashboard)/admin/users/page";
 import React from "react";
 import { Status } from "@prisma/client";
 
-const UserCard = ({ key, userInfo }: UserCardProps) => {
+const UserCard = ({ userInfo }: UserCardProps) => {
   return (
     <div className="user-card p-2">
       <div className="flex items-center justify-between">
@@ -34,6 +34,16 @@ const UserCard = ({ key, userInfo }: UserCardProps) => {
           label="Pending"
           count={userInfo.pendingTasks || 0}
           status="Pending"
+        />
+        <StatCard
+          label="InProgress"
+          count={userInfo.inProgressTasks || 0}
+          status="InProgress"
+        />
+        <StatCard
+          label="Completed"
+          count={userInfo.completedTasks || 0}
+          status="Completed"
         />
       </div>
     </div>
@@ -56,5 +66,7 @@ const StatCard = ({ label, count, status }: StatCardType) => {
     }
   };
 
-  return <div></div>;
+  return <div className={`flex-1 text-[10px] font-medium ${getStatusTagColor()} px-4 py-0.5 rounded`}>
+    <span className="text-[12px] font-semibold"> {count} </span> <br /> {label}
+  </div>;
 };

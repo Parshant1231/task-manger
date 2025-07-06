@@ -97,6 +97,14 @@ export type TaskCardProps = Omit<TaskType, "assignedTo"> & {
   onClick: () => void;
 };
 
+export type TaskTYPEDS = Omit<TaskType, "todoChecklist" | "attachments">& {
+    todoChecklist: {
+    text: string;
+    completed: boolean;
+  }[];
+  attachments: string[];
+}
+
 // export type TaskData = Omit<TaskType, "id" | "status" | "progress" | "createdAt" | "attachments" | "todoChecklist" | "completedTodoCount"> & {
 //   todoChecklist: string[];
 //   attachments: string[];
@@ -123,3 +131,4 @@ export type TaskData = {
   todoChecklist: TodoItem[];
   attachments: string[]; // or your custom file type
 };
+export type Attachment = { url: string };

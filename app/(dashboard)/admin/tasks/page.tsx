@@ -7,6 +7,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { StatusTab, TaskType } from "@/utils/dataTypes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { LuFileSpreadsheet } from "react-icons/lu";
 
 export default function ManageTask() {
@@ -16,7 +17,7 @@ export default function ManageTask() {
 
   const router = useRouter();
 
-  const getAllTasks = async (status: string) => {
+  const getAllTasks = async () => {
     try {
       const response = await axiosInstance.get(API_PATHS.TASKS.GET_ALL_TASKS, {
         params: {
@@ -49,21 +50,38 @@ export default function ManageTask() {
   };
 
   //  Download task report
-  const handleDownloadReport = async () => {};
+const handleDownloadReport = async () => {
+  try {
+    const response = await axiosInstance.get(API_PATHS.REPORTS.EXPORT_TASKS, {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "task_details.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error downloading task report:", error);
+    toast.error("Failed to download task report. Please try again.");
+  }
+};
+
 
   useEffect(() => {
-    getAllTasks(filterStatus);
+    getAllTasks();
     return () => {};
   }, [filterStatus]);
 
   return (
     <div>
-      <h2 className="text-xl md:text-2xl">Manage Task</h2>
-
       <div className="my-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl md:textxl font-medium">My Tasks</h2>
+            <h2 className="text-2xl md:textxl font-medium">My Tasks</h2>
             <button
               className="flex lg:hidden download-btn"
               onClick={handleDownloadReport}

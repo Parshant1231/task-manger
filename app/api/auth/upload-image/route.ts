@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     // ✅ Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ message: "Invalid file type" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid file type" },
+        { status: 400 }
+      );
     }
 
     // Convert to Buffer
@@ -40,7 +43,13 @@ export async function POST(req: NextRequest) {
     const imageUrl = `${protocol}://${host}/uploads/${filename}`;
 
     return NextResponse.json({ imageUrl }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let message = "Something went wrong";
+
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

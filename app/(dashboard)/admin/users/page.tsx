@@ -18,6 +18,7 @@ import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
 import { Role } from "@prisma/client";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { LuFileSpreadsheet } from "react-icons/lu";
 
 export default function ManageUsers() {
@@ -35,9 +36,32 @@ export default function ManageUsers() {
     }
   };
 
-  //   Download task report
-  const handleDownloadReport = async () => {};
+  //   Download User report
+const handleDownloadReport = async () => {
+  try {
 
+    const response = await axiosInstance.get(API_PATHS.REPORTS.EXPORT_USERS, {
+      responseType: "blob",
+    });
+
+    // Create blob URL & auto-download
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "user_report.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Download error:", error);
+    toast.error("Failed to download task report.");
+  }
+};
   useEffect(() => {
     getAllUsers();
 
@@ -46,7 +70,6 @@ export default function ManageUsers() {
 
   return (
     <div>
-      <h2 className="text-xl md:text-2xl">Create Task</h2>
       <div className="mt-5 mb-10">
         <div className="flex flex-row md:items-center justify-between">
           <h2 className="text-xl md:text-xl font-medium">Team Members</h2>

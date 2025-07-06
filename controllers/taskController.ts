@@ -429,7 +429,6 @@ export const updateTaskChecklist = async (
     const todoChecklist = body.todoChecklist;
     const taskId = id;
     const userId = user.id;
-    const updates: any = {};
 
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -459,25 +458,26 @@ export const updateTaskChecklist = async (
         { status: 403 }
       );
     }
-    updates.todoChecklist = todoChecklist;
 
-    const CompletedCount = todoChecklist.filter(
-      (item: any) => item.completed
-    ).length;
+    const CompletedCount = todoChecklist.filter((item: any) => item.completed).length;
     const totalItems = todoChecklist.length;
-    updates.progress =
-      totalItems > 0 ? Math.round((CompletedCount / totalItems) * 100) : 0;
+    const progress = totalItems > 0 ? Math.round((CompletedCount / totalItems) * 100) : 0;
 
-    if (task.progress === 100) {
-      updates.status = Status.Completed;
-    } else if (task.progress > 0) {
-      updates.status = Status.InProgress;
+    let status: Status = Status.Pending;
+    if (progress === 100) {
+      status = Status.Completed;
+    } else if (progress > 0) {
+      status = Status.InProgress;
     } else {
-      updates.status = Status.Pending;
+      status = Status.Pending;
     }
     const updateTask = await prisma.task.update({
       where: { id: taskId },
-      data: updates,
+      data: {
+        todoChecklist,
+        progress,
+        status,
+      },
       include: {
         assignedTo: {
           select: {

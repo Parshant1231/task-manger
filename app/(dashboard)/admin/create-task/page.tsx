@@ -7,7 +7,7 @@ import TodoListInput from "@/Components/Inputs/TodoListInput";
 import { API_PATHS } from "@/utils/apiPaths";
 import axiosInstance from "@/utils/axiosInstance";
 import { PRIORITY_DATA } from "@/utils/data";
-import { Priority, User } from "@prisma/client";
+import { Priority } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LuTrash2 } from "react-icons/lu";
@@ -15,6 +15,9 @@ import { toast } from "react-hot-toast";
 import moment from "moment";
 import { TaskData, TodoItem, UserData } from "@/utils/dataTypes";
 import { useRouter } from "next/navigation";
+import { Modal } from "@/Components/Model";
+import DeleteAlert from "@/Components/DeleteAlert";
+import { AxiosError } from "axios";
 
 export default function CreateTask() {
   const searchParams = useSearchParams();
@@ -42,7 +45,10 @@ export default function CreateTask() {
     setAllUsers(res.data);
   };
 
-  const handleValueChange = (key: string, value: any) => {
+  const handleValueChange = <K extends keyof TaskData>(
+    key: K,
+    value: TaskData[K]
+  ) => {
     setTaskData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -63,23 +69,24 @@ export default function CreateTask() {
     setLoading(true);
 
     try {
-      const todolist = taskData.todoChecklist?.map((item) => ({
-        text: item,
-        completed: false,
-      }));
-
       await axiosInstance.post(API_PATHS.TASKS.CREATE_TASK, {
         ...taskData,
         dueDate: new Date(taskData.dueDate).toISOString(),
-        todoChecklist: todolist,
+        todoChecklist: taskData.todoChecklist.map((item) => ({
+          text: item.text,
+          completed: false,
+        })),
+        assignedTo: taskData.assignedTo.map((user) => user.id), // ✅ Send only array of IDs
       });
 
       toast.success("Task Created Successfully");
-
       clearData();
-    } catch (error: any) {
-      console.error("Error creating task:", error);
-      toast.error(error?.response?.data?.message || "Failed to create task.");
+      router.replace("/admin/dashboard");
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
+      console.error("Error creating task:", err);
+
+      toast.error(err?.response?.data?.message || "Failed to create task.");
     } finally {
       setLoading(false);
     }
@@ -106,16 +113,15 @@ export default function CreateTask() {
         };
       });
 
-      const assignedlist = taskData.assignedTo.map((user: any) => user.id);
-
       await axiosInstance.put(API_PATHS.TASKS.UPDATE_TASK(taskId), {
         ...taskData,
         dueDate: new Date(taskData.dueDate).toISOString(),
         todoChecklist: todolist,
-        assignedTo: assignedlist,
+        assignedTo: taskData.assignedTo.map((user) => user.id),
       });
 
       toast.success("Task Updated Successfully");
+      router.replace("/admin/tasks");
     } catch (error) {
       console.error("Error during fetching the data ", error);
     } finally {
@@ -183,7 +189,7 @@ export default function CreateTask() {
           assignedTo: taskInfo.assignedTo || [], // 👈 not mapping to user.id
 
           todoChecklist:
-            taskInfo.todoChecklist?.map((item: any) => ({
+            taskInfo.todoChecklist?.map((item: TodoItem) => ({
               text: item.text,
               completed: item.completed ?? false,
             })) || [],
@@ -211,21 +217,27 @@ export default function CreateTask() {
 
     setOpenDeleteAlert(false);
     toast.success("Expense details deleted successfully");
-    router.replace("/admin/tasks")
+    router.replace("/admin/tasks");
   };
 
   useEffect(() => {
-    if (!taskId) return;
+    if (!taskId) {
+      clearData();
+      setCurrentTask(null);
+      getAllUsers(); // 🥇 Load first for create mode
+      return;
+    }
     // console.log("tASK ID IS", taskId);
     // console.log("📦 Updated TaskData:", taskData);
 
-    getTaskDetailsByID(taskId); // Pass as non-null string
-    getAllUsers();
+    // 🥇 Fetch users first, then task
+    getAllUsers().then(() => {
+      getTaskDetailsByID(taskId);
+    });
   }, [taskId]);
 
   return (
     <div>
-      <h2 className="text-xl md:text-2xl">Create Task</h2>
       <div className="mt-5">
         <div className="grid grid-cols-1 md:grid-col-4 mt-4">
           <div className="form-card col-span-3">
@@ -285,7 +297,9 @@ export default function CreateTask() {
                 <SelectDropdown
                   options={PRIORITY_DATA}
                   value={taskData.priority}
-                  onChange={(value) => handleValueChange("priority", value)}
+                  onChange={(value) =>
+                    handleValueChange("priority", value as Priority)
+                  }
                   placeholder="Select Priority"
                 />
               </div>
@@ -309,12 +323,13 @@ export default function CreateTask() {
                   Assign To
                 </label>
                 <SelectUsers
-                  selectedUsers={taskData.assignedTo.map((u) => u.id)} // ✅ now works
+                  selectedUsers={taskData.assignedTo.map((u) => u.id)}
                   setSelectedUsers={(userIds) => {
                     const matchedUsers = allUsers.filter((u) =>
                       userIds.includes(u.id)
                     );
                     handleValueChange("assignedTo", matchedUsers);
+                    console.log("🧪 AssignedTo in form:", taskData.assignedTo);
                   }}
                 />
               </div>
@@ -366,6 +381,17 @@ export default function CreateTask() {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={openDeleteAlert}
+        onClose={() => setOpenDeleteAlert(false)}
+        title="Delete Task"
+      >
+        <DeleteAlert
+          content="Are you sure you want to delete this task?"
+          onDelete={() => deleteTask()}
+        />
+      </Modal>
     </div>
   );
 }

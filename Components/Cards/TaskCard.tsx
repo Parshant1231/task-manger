@@ -87,7 +87,7 @@ export const TaskCard = ({
 
       <div className="px-4">
         <div className="flex items-center justify-center my-1">
-          <label className="text-xs text-gray-500">Start Date</label>
+          <label className="text-xs text-gray-500 mr-1">Start Date</label>
           <p className="text-[13px] font-medium text-gray-900">
             {moment(createdAt).format("Do MMM YYYY")}
           </p>

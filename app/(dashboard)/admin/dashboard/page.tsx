@@ -1,6 +1,5 @@
 "use client";
 
-import Loading from "@/app/loading";
 import { InfoCard } from "@/Components/Cards/InfoCard";
 import { CustomBarChart } from "@/Components/Charts/CustomBarChart";
 import { CustomPieChart } from "@/Components/Charts/CustomPieChart";
@@ -18,7 +17,7 @@ import { LuSquareArrowRight } from "react-icons/lu";
 const COLORS = ["#6366F1", "#10B981", "#F59E0B"];
 
 export default function Dashboard() {
-  const { user, loading } = useContext(userContext);
+  const { user } = useContext(userContext);
 
   const navigate = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardDataDT | null>(
@@ -29,8 +28,8 @@ export default function Dashboard() {
 
   // Prepare Chart Data
   const prepareChartData = (charts: any) => {
-    const taskDistribution = charts?.taskDistribution || null;
-    const taskPriorityLevels = charts?.taskPriorityLevels || null;
+    const taskDistribution = charts.taskDistribution || null;
+    const taskPriorityLevels = charts.taskPriorityLevels || null;
 
     const taskDistributionData = [
       { status: "Pending", count: taskDistribution?.Pending || 0 },

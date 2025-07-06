@@ -1,7 +1,8 @@
-import { Status } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import excelJS from "exceljs";
 import { NextRequest, NextResponse as res } from "next/server";
+import { Status } from "@prisma/client"; // ✅ Adjust this if your enum is named differently
+
 
 export const exportTaskReport = async (req: NextRequest) => {
   try {
@@ -75,17 +76,16 @@ export const exportUsersReport = async (req: NextRequest) => {
   try {
     const users = await prisma.user.findMany({
       select: {
+        id: true,
         name: true,
         email: true,
-        id: true,
       },
     });
+
     const userTasks = await prisma.task.findMany({
       include: {
         assignedTo: {
           select: {
-            name: true,
-            email: true,
             id: true,
           },
         },
@@ -95,6 +95,8 @@ export const exportUsersReport = async (req: NextRequest) => {
     const userTaskMap: Record<
       string,
       {
+        name: string;
+        email: string;
         taskCount: number;
         pendingTasks: number;
         inProgressTasks: number;
@@ -102,31 +104,29 @@ export const exportUsersReport = async (req: NextRequest) => {
       }
     > = {};
 
-    userTasks.forEach((task) => {
-      if (task.assignedTo) {
-        task.assignedTo.forEach((assignedUser) => {
-          const userId = assignedUser.id;
-          if (!userTaskMap[userId]) {
-            userTaskMap[userId] = {
-              taskCount: 0,
-              pendingTasks: 0,
-              inProgressTasks: 0,
-              completedTasks: 0,
-            };
-          }
-
-          userTaskMap[userId].taskCount += 1;
-
-          if (task.status === Status.Pending) {
-            userTaskMap[userId].pendingTasks += 1;
-          } else if (task.status === Status.InProgress) {
-            userTaskMap[userId].inProgressTasks += 1;
-          } else if (task.status === Status.Completed) {
-            userTaskMap[userId].completedTasks += 1;
-          }
-        });
-      }
+    users.forEach((user) => {
+      userTaskMap[user.id] = {
+        name: user.name,
+        email: user.email,
+        taskCount: 0,
+        pendingTasks: 0,
+        inProgressTasks: 0,
+        completedTasks: 0,
+      };
     });
+
+    userTasks.forEach((task) => {
+      task.assignedTo?.forEach((assignedUser) => {
+        const userStats = userTaskMap[assignedUser.id];
+        if (userStats) {
+          userStats.taskCount += 1;
+          if (task.status === Status.Pending) userStats.pendingTasks += 1;
+          else if (task.status === Status.InProgress) userStats.inProgressTasks += 1;
+          else if (task.status === Status.Completed) userStats.completedTasks += 1;
+        }
+      });
+    });
+
     const workbook = new excelJS.Workbook();
     const worksheet = workbook.addWorksheet("User Task Report");
 
@@ -135,11 +135,7 @@ export const exportUsersReport = async (req: NextRequest) => {
       { header: "Email", key: "email", width: 40 },
       { header: "Total Assigned Tasks", key: "taskCount", width: 20 },
       { header: "Pending Tasks", key: "pendingTasks", width: 20 },
-      {
-        header: "In Progress Tasks",
-        key: "inProgressTasks",
-        width: 20,
-      },
+      { header: "In Progress Tasks", key: "inProgressTasks", width: 20 },
       { header: "Completed Tasks", key: "completedTasks", width: 20 },
     ];
 
@@ -147,7 +143,6 @@ export const exportUsersReport = async (req: NextRequest) => {
       worksheet.addRow(user);
     });
 
-    // Create buffer & return response
     const buffer = await workbook.xlsx.writeBuffer();
 
     return new res(buffer, {
@@ -159,7 +154,10 @@ export const exportUsersReport = async (req: NextRequest) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching tasks:", error);
-    res.json({ message: "Error exporting tasks" }, { status: 500 });
+    console.error("Error exporting users report:", error);
+    return res.json(
+      { message: "Error exporting users report" },
+      { status: 500 }
+    );
   }
 };
