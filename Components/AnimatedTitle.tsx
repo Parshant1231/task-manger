@@ -22,7 +22,7 @@ export function AnimatedTitle({ phrases, interval = 5000 }: AnimatedTitleProps) 
     "bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent",
     "bg-gradient-to-r from-red-300 to-orange-400 bg-clip-text text-transparent",
     "bg-gradient-to-r from-indigo-300 to-purple-500 bg-clip-text text-transparent",
-    "bg-gradient-to-r from-teal-300 to-cyan-500 bg-clip-text text-transparent text",
+    "bg-gradient-to-r from-teal-300 to-cyan-500 bg-clip-text text-transparent ",
   ]
 
   // Auto change index
